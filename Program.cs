@@ -1,7 +1,15 @@
+using EmployeeManagement.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Add SQLite database
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite("Data Source=skills.db"));
+
 
 var app = builder.Build();
 
@@ -13,6 +21,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+
 app.UseHttpsRedirection();
 app.UseRouting();
 
@@ -22,7 +31,7 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=Skills}/{action=Index}/{id?}")
     .WithStaticAssets();
 
 

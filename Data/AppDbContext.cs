@@ -14,11 +14,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Skill>().Property(s => s.CreatedAt)
             .HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
-        // Seed a few skills for quick testing
+        // Seed initial data
         modelBuilder.Entity<Skill>().HasData(
-            new Skill { Id = 1, Name = "C# Fundamentals", Description = "Core C# syntax, OOP, LINQ", CreatedAt = DateTime.UtcNow.AddDays(-7) },
-            new Skill { Id = 2, Name = "ASP.NET Core", Description = "Web APIs, MVC, Razor Pages", CreatedAt = DateTime.UtcNow.AddDays(-5) },
-            new Skill { Id = 3, Name = "SQL", Description = "Joins, indexing, query optimization", CreatedAt = DateTime.UtcNow.AddDays(-3) }
+            new Skill { Id = 1, Name = "C#", Description = "Programming in C#", CreatedAt = new DateTime(2025, 1, 1) },
+            new Skill { Id = 2, Name = "SQL", Description = "Database querying and design", CreatedAt = new DateTime(2025, 1, 1) },
+            new Skill { Id = 3, Name = "JavaScript", Description = "Frontend and backend scripting", CreatedAt = new DateTime(2025, 1, 1) },
+            new Skill { Id = 4, Name = "Project Management", Description = "Agile and Scrum methodologies", CreatedAt = new DateTime(2025, 1, 1) },
+            new Skill { Id = 5, Name = "Cloud Computing", Description = "Azure and AWS services", CreatedAt = new DateTime(2025, 1, 1) }
         );
+
     }
 }
