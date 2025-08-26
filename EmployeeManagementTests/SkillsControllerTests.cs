@@ -1,44 +1,48 @@
 ﻿using EmployeeManagement.Controllers;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 
-namespace EmployeeManagementTests
+namespace EmployeeManagement.Tests
 {
+    [TestFixture]
     public class SkillsControllerTests
     {
+        private const int SeedSkillId = 1;
+        private const string SeedSkillName = "TestSkill";
+
         private AppDbContext _dbContext = null!;
         private SkillsController _controller = null!;
 
         [SetUp]
         public void Setup()
         {
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // fresh db each test
-                .Options;
-
-            _dbContext = new AppDbContext(options);
-
-            // seed a skill
-            _dbContext.Skills.Add(new Skill
-            {
-                Id = 1,
-                Name = "TestSkill",
-                Description = "Testing",
-                CreatedAt = DateTime.UtcNow
-            });
-            _dbContext.SaveChanges();
-
+            _dbContext = CreateDbContextWithSeed();
             _controller = new SkillsController(_dbContext);
         }
 
         [TearDown]
-        public void TearDown()
+        public void TearDown() => _dbContext.Dispose();
+
+        private static AppDbContext CreateDbContextWithSeed()
         {
-            _dbContext.Dispose();
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
+
+            var context = new AppDbContext(options);
+            context.Skills.Add(new Skill
+            {
+                Id = SeedSkillId,
+                Name = SeedSkillName,
+                Description = "Testing",
+                CreatedAt = DateTime.UtcNow
+            });
+            context.SaveChanges();
+
+            return context;
         }
 
         [Test]
@@ -46,19 +50,25 @@ namespace EmployeeManagementTests
         {
             var result = await _controller.GetSkills();
 
-            Assert.That(result.Value, Is.Not.Null);
-            Assert.That(result.Value.Count(), Is.EqualTo(1));
-            Assert.That(result.Value.First().Name, Is.EqualTo("TestSkill"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Value, Is.Not.Null);
+                Assert.That(result.Value!.Count(), Is.EqualTo(1));
+                Assert.That(result.Value.First().Name, Is.EqualTo(SeedSkillName));
+            });
         }
 
         [Test]
         public async Task GetSkill_ExistingId_ReturnsSkill()
         {
-            var result = await _controller.GetSkill(1);
+            var result = await _controller.GetSkill(SeedSkillId);
 
-            Assert.That(result.Result, Is.Null); // ActionResult<Skill> has Value, not IActionResult
-            Assert.That(result.Value, Is.Not.Null);
-            Assert.That(result.Value!.Name, Is.EqualTo("TestSkill"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Result, Is.Null); // success path
+                Assert.That(result.Value, Is.Not.Null);
+                Assert.That(result.Value!.Name, Is.EqualTo(SeedSkillName));
+            });
         }
 
         [Test]
@@ -66,7 +76,7 @@ namespace EmployeeManagementTests
         {
             var result = await _controller.GetSkill(999);
 
-            Assert.That(result.Result, Is.InstanceOf<NotFoundResult>());
+            Assert.That(result.Result, Is.TypeOf<NotFoundResult>());
         }
 
         [Test]
@@ -76,19 +86,22 @@ namespace EmployeeManagementTests
 
             var result = await _controller.CreateSkill(newSkill);
 
-            Assert.That(result.Result, Is.InstanceOf<CreatedAtActionResult>());
-            Assert.That(_dbContext.Skills.Count(), Is.EqualTo(2));
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Result, Is.TypeOf<CreatedAtActionResult>());
+                Assert.That(_dbContext.Skills.Count(), Is.EqualTo(2));
+            });
         }
 
         [Test]
-        public async Task UpdateSkill_ValidUpdate_ReturnsNoContent()
+        public async Task UpdateSkill_ValidUpdate_ReturnsNoContentAndUpdatesDb()
         {
-            var updated = new Skill { Id = 1, Name = "UpdatedName", Description = "UpdatedDesc" };
+            var updated = new Skill { Id = SeedSkillId, Name = "UpdatedName", Description = "UpdatedDesc" };
 
-            var result = await _controller.UpdateSkill(1, updated);
+            var result = await _controller.UpdateSkill(SeedSkillId, updated);
 
-            Assert.That(result, Is.InstanceOf<NoContentResult>());
-            var skill = await _dbContext.Skills.FindAsync(1);
+            Assert.That(result, Is.TypeOf<NoContentResult>());
+            var skill = await _dbContext.Skills.FindAsync(SeedSkillId);
             Assert.That(skill!.Name, Is.EqualTo("UpdatedName"));
         }
 
@@ -97,9 +110,9 @@ namespace EmployeeManagementTests
         {
             var updated = new Skill { Id = 2, Name = "DoesntMatter" };
 
-            var result = await _controller.UpdateSkill(1, updated);
+            var result = await _controller.UpdateSkill(SeedSkillId, updated);
 
-            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
         }
 
         [Test]
@@ -109,16 +122,19 @@ namespace EmployeeManagementTests
 
             var result = await _controller.UpdateSkill(999, updated);
 
-            Assert.That(result, Is.InstanceOf<NotFoundResult>());
+            Assert.That(result, Is.TypeOf<NotFoundResult>());
         }
 
         [Test]
-        public async Task DeleteSkill_Existing_ReturnsNoContent()
+        public async Task DeleteSkill_Existing_RemovesFromDbAndReturnsNoContent()
         {
-            var result = await _controller.DeleteSkill(1);
+            var result = await _controller.DeleteSkill(SeedSkillId);
 
-            Assert.That(result, Is.InstanceOf<NoContentResult>());
-            Assert.That(_dbContext.Skills.Any(s => s.Id == 1), Is.False);
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.TypeOf<NoContentResult>());
+                Assert.That(_dbContext.Skills.Any(s => s.Id == SeedSkillId), Is.False);
+            });
         }
 
         [Test]
@@ -126,8 +142,7 @@ namespace EmployeeManagementTests
         {
             var result = await _controller.DeleteSkill(999);
 
-            Assert.That(result, Is.InstanceOf<NotFoundResult>());
+            Assert.That(result, Is.TypeOf<NotFoundResult>());
         }
     }
 }
-
