@@ -5,14 +5,30 @@ namespace EmployeeManagement.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<Skill> Skills => Set<Skill>();
+    public DbSet<Skill> Skills {get;set;}
+    public DbSet<Employee> Employees { get; set; }
+
+    public DbSet<EmployeeSkill> EmployeeSkills { get; set; }
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<EmployeeSkill>()
+            .HasKey(es => new { es.EmployeeId, es.SkillId });
+
+        modelBuilder.Entity<EmployeeSkill>()
+            .HasOne(es => es.Employee)
+            .WithMany(e => e.EmployeeSkills)
+            .HasForeignKey(es => es.EmployeeId);
+
+        modelBuilder.Entity<EmployeeSkill>()
+            .HasOne(es => es.Skill)
+            .WithMany(s => s.EmployeeSkills)
+            .HasForeignKey(es => es.SkillId);
 
         modelBuilder.Entity<Skill>().Property(s => s.CreatedAt)
-            .HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+                    .HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
         // Seed initial data
         modelBuilder.Entity<Skill>().HasData(
