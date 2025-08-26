@@ -7,6 +7,8 @@
         public string LastName { get; set; }
         public string Email { get; set; }
 
+        public DateTime HireDate { get; set; } = DateTime.UtcNow;
+
         public ICollection<EmployeeSkill> EmployeeSkills { get; set; } = new List<EmployeeSkill>();
 
     }
