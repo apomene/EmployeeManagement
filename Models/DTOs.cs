@@ -9,6 +9,7 @@ namespace EmployeeManagement.Models
             string FirstName,
             string LastName,
             DateTime HireDate,
+            string Email,
             List<string> Skills);
 
         // Input DTOs
@@ -16,11 +17,13 @@ namespace EmployeeManagement.Models
             [Required] string FirstName,
             [Required] string LastName,
             DateTime HireDate,
+            string Email,
             List<string>? Skills);
 
         public record UpdateEmployeeDto(
             [Required] string FirstName,
             [Required] string LastName,
+            string Email,
             DateTime HireDate);
 
         public record AddSkillDto(

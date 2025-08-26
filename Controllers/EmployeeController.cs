@@ -36,6 +36,7 @@ public class EmployeesController(AppDbContext db) : ControllerBase
                 e.FirstName,
                 e.LastName,
                 e.HireDate,
+                e.Email,
                 e.EmployeeSkills.Select(es => es.Skill.Name).ToList()
             )).ToListAsync();
 
@@ -58,6 +59,7 @@ public class EmployeesController(AppDbContext db) : ControllerBase
             e.FirstName,
             e.LastName,
             e.HireDate,
+            e.Email,
             e.EmployeeSkills.Select(es => es.Skill.Name).ToList()
         );
 
@@ -72,7 +74,9 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         {
             FirstName = dto.FirstName,
             LastName = dto.LastName,
-            HireDate = dto.HireDate
+            HireDate = dto.HireDate,
+            Email = dto.Email
+
         };
 
         if (dto.Skills != null && dto.Skills.Any())
@@ -97,6 +101,7 @@ public class EmployeesController(AppDbContext db) : ControllerBase
             employee.FirstName,
             employee.LastName,
             employee.HireDate,
+            employee.Email,
             employee.EmployeeSkills.Select(es => es.Skill.Name).ToList()
         );
 
@@ -113,6 +118,7 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         employee.FirstName = dto.FirstName;
         employee.LastName = dto.LastName;
         employee.HireDate = dto.HireDate;
+        employee.Email = dto.Email;
 
         await db.SaveChangesAsync();
         return NoContent();

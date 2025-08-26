@@ -19,7 +19,7 @@ public class EmployeesControllerTests
             .UseInMemoryDatabase("TestDb")
             .Options;
 
-        _dbContext = new AppDbContext(options);
+        _dbContext = CreateDbContextWithSeed();
         _controller = new EmployeesController(_dbContext);
     }
 
@@ -28,24 +28,35 @@ public class EmployeesControllerTests
     [TearDown]
     public void TearDown() => _dbContext.Dispose();
 
+    private static AppDbContext CreateDbContextWithSeed()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        var context = new AppDbContext(options);     
+
+        return context;
+    }
+
     [Test]
     public async Task CreateEmployee_AddsEmployee()
     {
-        var dto = new CreateEmployeeDto("John", "Doe", DateTime.UtcNow, new List<string> { "C#" });
+        var dto = new CreateEmployeeDto("John", "Doe", DateTime.UtcNow, "mark.spencer@example.com", new List<string> { "C#" });
 
         var result = await _controller.CreateEmployee(dto);
 
-        var created = (result.Result as CreatedAtActionResult)?.Value as Employee;
+        var created = (result.Result as CreatedAtActionResult)?.Value as EmployeeDto;
         Assert.That(created, Is.Not.Null);
         Assert.That(created!.FirstName, Is.EqualTo("John"));
-        Assert.That(created.EmployeeSkills.First().Skill.Name, Is.EqualTo("C#"));
+        Assert.That(created.Skills.First(), Is.EqualTo("C#"));
     }
 
     [Test]
     public async Task GetEmployees_ReturnsEmployees()
     {
-        _dbContext.Employees.Add(new Employee { FirstName = "Alice", LastName = "Smith", HireDate = DateTime.UtcNow });
-        _dbContext.Employees.Add(new Employee { FirstName = "Bob", LastName = "Brown", HireDate = DateTime.UtcNow });
+        _dbContext.Employees.Add(new Employee { FirstName = "Alice", LastName = "Smith", HireDate = DateTime.UtcNow, Email = "mark.spencer@example.com" });
+        _dbContext.Employees.Add(new Employee { FirstName = "Bob", LastName = "Brown", HireDate = DateTime.UtcNow, Email = "mark.spencer@example.com" });
         await _dbContext.SaveChangesAsync();
 
         var result = await _controller.GetEmployees();
@@ -58,13 +69,13 @@ public class EmployeesControllerTests
     [Test]
     public async Task GetEmployee_ReturnsSingleEmployee()
     {
-        var emp = new Employee { FirstName = "Charlie", LastName = "Day", HireDate = DateTime.UtcNow };
+        var emp = new Employee { FirstName = "Charlie", LastName = "Day", HireDate = DateTime.UtcNow, Email = "mark.spencer@example.com" };
         _dbContext.Employees.Add(emp);
         await _dbContext.SaveChangesAsync();
 
         var result = await _controller.GetEmployee(emp.Id);
 
-        var employee = result.Value;
+        var employee = (result.Result as OkObjectResult)?.Value as EmployeeDto;
         Assert.That(employee, Is.Not.Null);
         Assert.That(employee!.FirstName, Is.EqualTo("Charlie"));
     }
@@ -72,11 +83,11 @@ public class EmployeesControllerTests
     [Test]
     public async Task UpdateEmployee_ChangesData()
     {
-        var emp = new Employee { FirstName = "Eve", LastName = "Jones", HireDate = DateTime.UtcNow };
+        var emp = new Employee { FirstName = "Eve", LastName = "Jones", HireDate = DateTime.UtcNow, Email = "mark.spencer@example.com" };
         _dbContext.Employees.Add(emp);
         await _dbContext.SaveChangesAsync();
 
-        var dto = new UpdateEmployeeDto("EveUpdated", "JonesUpdated", DateTime.UtcNow);
+        var dto = new UpdateEmployeeDto("EveUpdated", "JonesUpdated", "mark.spencer@example.com" , DateTime.UtcNow);
         var result = await _controller.UpdateEmployee(emp.Id, dto);
 
         Assert.That(result, Is.InstanceOf<NoContentResult>());
@@ -88,7 +99,7 @@ public class EmployeesControllerTests
     [Test]
     public async Task DeleteEmployee_RemovesEmployee()
     {
-        var emp = new Employee { FirstName = "Sam", LastName = "Fisher", HireDate = DateTime.UtcNow };
+        var emp = new Employee { FirstName = "Sam", LastName = "Fisher", HireDate = DateTime.UtcNow, Email = "mark.spencer@example.com" };
         _dbContext.Employees.Add(emp);
         await _dbContext.SaveChangesAsync();
 
@@ -102,7 +113,7 @@ public class EmployeesControllerTests
     [Test]
     public async Task AddSkill_AssignsSkillToEmployee()
     {
-        var emp = new Employee { FirstName = "Mark", LastName = "Spencer", HireDate = DateTime.UtcNow };
+        var emp = new Employee { FirstName = "Mark", LastName = "Spencer", HireDate = DateTime.UtcNow, Email = "mark.spencer@example.com" };
         _dbContext.Employees.Add(emp);
         await _dbContext.SaveChangesAsync();
 
@@ -128,6 +139,7 @@ public class EmployeesControllerTests
             FirstName = "Lucy",
             LastName = "Lawless",
             HireDate = DateTime.UtcNow,
+            Email = "mark.spencer@example.com",
             EmployeeSkills = new List<EmployeeSkill>
             {
                 new EmployeeSkill { Skill = skill }
@@ -138,7 +150,7 @@ public class EmployeesControllerTests
 
         var result = await _controller.RemoveSkill(emp.Id, skill.Id);
 
-        Assert.That(result, Is.InstanceOf<NoContent>());
+        Assert.That(result, Is.InstanceOf<NoContentResult>());
 
         var updated = await _dbContext.Employees
             .Include(e => e.EmployeeSkills)
