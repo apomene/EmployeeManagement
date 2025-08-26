@@ -9,40 +9,55 @@ namespace EmployeeManagement.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class SkillsController(AppDbContext db) : ControllerBase
-{
-
+{    
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Skill>>> GetSkills() =>
-     await db.Skills.AsNoTracking()
-                    .OrderBy(s => s.Name)
-                    .ToListAsync();
+    public async Task<ActionResult<IEnumerable<SkillDto>>> GetSkills()
+    {
+        var skills = await db.Skills
+            .AsNoTracking()
+            .OrderBy(s => s.Name)
+            .Select(s => new SkillDto(s.Id, s.Name, s.Description, s.CreatedAt))
+            .ToListAsync();
+
+        return Ok(skills);
+    }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Skill>> GetSkill(int id) =>
-        await FindSkillAsync(id) is { } skill ? skill : NotFound();
+    public async Task<ActionResult<SkillDto>> GetSkill(int id)
+    {
+        var skill = await FindSkillAsync(id);
+        if (skill is null) return NotFound();
+
+        return new SkillDto(skill.Id, skill.Name, skill.Description, skill.CreatedAt);
+    }
 
     [HttpPost]
-    public async Task<ActionResult<Skill>> CreateSkill([FromBody] Skill skill)
+    public async Task<ActionResult<SkillDto>> CreateSkill([FromBody] CreateSkillDto dto)
     {
-        skill.Id = 0;
-        skill.CreatedAt = DateTime.UtcNow;
+        var skill = new Skill
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            CreatedAt = DateTime.UtcNow
+        };
 
         db.Skills.Add(skill);
         await db.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetSkill), new { id = skill.Id }, skill);
+        var resultDto = new SkillDto(skill.Id, skill.Name, skill.Description, skill.CreatedAt);
+        return CreatedAtAction(nameof(GetSkill), new { id = skill.Id }, resultDto);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> UpdateSkill(int id, [FromBody] Skill updated)
+    public async Task<IActionResult> UpdateSkill(int id, [FromBody] UpdateSkillDto dto)
     {
-        if (id != updated.Id) return BadRequest("ID mismatch");
+        if (id != dto.Id) return BadRequest("ID mismatch");
 
         var existing = await FindSkillAsync(id);
         if (existing is null) return NotFound();
 
-        existing.Name = updated.Name;
-        existing.Description = updated.Description;
+        existing.Name = dto.Name;
+        existing.Description = dto.Description;
 
         await db.SaveChangesAsync();
         return NoContent();
@@ -62,3 +77,4 @@ public class SkillsController(AppDbContext db) : ControllerBase
     private async Task<Skill?> FindSkillAsync(int id) =>
         await db.Skills.FindAsync(id);
 }
+

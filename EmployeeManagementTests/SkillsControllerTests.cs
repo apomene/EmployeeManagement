@@ -50,11 +50,14 @@ namespace EmployeeManagement.Tests
         {
             var result = await _controller.GetSkills();
 
+            var skills = (result.Result as OkObjectResult)?.Value as List<SkillDto>;
+
+
             Assert.Multiple(() =>
             {
-                Assert.That(result.Value, Is.Not.Null);
-                Assert.That(result.Value!.Count(), Is.EqualTo(1));
-                Assert.That(result.Value.First().Name, Is.EqualTo(SeedSkillName));
+                Assert.That(skills, Is.Not.Null);
+                Assert.That(skills!.Count(), Is.EqualTo(1));
+                Assert.That(skills.First().Name, Is.EqualTo(SeedSkillName));
             });
         }
 
@@ -82,7 +85,7 @@ namespace EmployeeManagement.Tests
         [Test]
         public async Task CreateSkill_AddsSkillAndReturnsCreatedAt()
         {
-            var newSkill = new Skill { Name = "NewSkill", Description = "NewDesc" };
+            var newSkill = new  CreateSkillDto("NewSkill", "NewDesc" );
 
             var result = await _controller.CreateSkill(newSkill);
 
@@ -96,7 +99,7 @@ namespace EmployeeManagement.Tests
         [Test]
         public async Task UpdateSkill_ValidUpdate_ReturnsNoContentAndUpdatesDb()
         {
-            var updated = new Skill { Id = SeedSkillId, Name = "UpdatedName", Description = "UpdatedDesc" };
+            var updated = new UpdateSkillDto(1,"UpdatedName", "UpdatedDesc" );
 
             var result = await _controller.UpdateSkill(SeedSkillId, updated);
 
@@ -108,7 +111,9 @@ namespace EmployeeManagement.Tests
         [Test]
         public async Task UpdateSkill_IdMismatch_ReturnsBadRequest()
         {
-            var updated = new Skill { Id = 2, Name = "DoesntMatter" };
+       
+
+            var updated = new UpdateSkillDto(2, "DoesntMatter", "DoesntMatter");
 
             var result = await _controller.UpdateSkill(SeedSkillId, updated);
 
@@ -118,7 +123,8 @@ namespace EmployeeManagement.Tests
         [Test]
         public async Task UpdateSkill_NonExisting_ReturnsNotFound()
         {
-            var updated = new Skill { Id = 999, Name = "Missing" };
+
+            var updated = new UpdateSkillDto(999, "Missing", "DoesntMatter");
 
             var result = await _controller.UpdateSkill(999, updated);
 

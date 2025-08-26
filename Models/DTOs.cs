@@ -3,30 +3,43 @@
 namespace EmployeeManagement.Models
 {
 
-        // Response DTO
-        public record EmployeeDto(
-            int Id,
-            string FirstName,
-            string LastName,
-            DateTime HireDate,
-            string Email,
-            List<string> Skills);
 
-        // Input DTOs
-        public record CreateEmployeeDto(
-            [Required] string FirstName,
-            [Required] string LastName,
-            DateTime HireDate,
-            string Email,
-            List<string>? Skills);
+    public record EmployeeDto(
+        int Id,
+        string FirstName,
+        string LastName,
+        DateTime HireDate,
+        string Email,
+        List<string> Skills);
 
-        public record UpdateEmployeeDto(
-            [Required] string FirstName,
-            [Required] string LastName,
-            string Email,
-            DateTime HireDate);
+    public record CreateEmployeeDto(
+        [Required] string FirstName,
+        [Required] string LastName,
+        DateTime HireDate,
+        string Email,
+        List<string>? Skills);
 
-        public record AddSkillDto(
-            [Required] string SkillName);
+    public record UpdateEmployeeDto(
+        [Required] string FirstName,
+        [Required] string LastName,
+        string Email,
+        DateTime HireDate);
+
+    public record AddSkillDto(
+        [Required] string SkillName);
+
+
+    public record SkillDto(int Id, string Name, string? Description, DateTime CreatedAt);
+
+
+    public record CreateSkillDto(
+        [Required, StringLength(120)] string Name,
+        [StringLength(1000)] string? Description);
+
+
+    public record UpdateSkillDto(
+        [Required] int Id,
+        [Required, StringLength(120)] string Name,
+        [StringLength(1000)] string? Description);
 
 }
