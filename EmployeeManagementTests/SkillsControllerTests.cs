@@ -1,7 +1,10 @@
 ﻿using EmployeeManagement.Controllers;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
+
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace EmployeeManagementTests
 {
@@ -9,9 +12,33 @@ namespace EmployeeManagementTests
     {
         private AppDbContext _dbContext = null!;
         private SkillsController _controller = null!;
+
         [SetUp]
         public void Setup()
         {
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // fresh db each test
+                .Options;
+
+            _dbContext = new AppDbContext(options);
+
+            // seed a skill
+            _dbContext.Skills.Add(new Skill
+            {
+                Id = 1,
+                Name = "TestSkill",
+                Description = "Testing",
+                CreatedAt = DateTime.UtcNow
+            });
+            _dbContext.SaveChanges();
+
+            _controller = new SkillsController(_dbContext);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            _dbContext.Dispose();
         }
 
         [Test]
