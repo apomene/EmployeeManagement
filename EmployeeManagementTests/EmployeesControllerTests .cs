@@ -4,9 +4,10 @@ using EmployeeManagement.Models;
 using EmployeeManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
 
 
-    [TestFixture]
+[TestFixture]
     public class EmployeesControllerTests
     {
         private EmployeesController _controller;
@@ -75,7 +76,14 @@ using Microsoft.EntityFrameworkCore;
             };
 
     [Test]
-    public async Task GetEmployees_WithSearchAndOrdering_ReturnsFilteredOrderedList()
+    [TestCase("FirstName", "John", "HireDate", "desc", 0, "")]
+    [TestCase("FirstName", "Alice", "HireDate", "desc", 1 ,"Alice")]
+    [TestCase("FirstName", "Alice", "LastName", "asc", 1, "Alice")]
+    [TestCase("FirstName", "Alice", "FirstName", "asc", 1, "Alice")]
+    [TestCase("LastName", "Johnson", "HireDate", "desc", 1, "Bob")]
+    [TestCase("LastName", "Johnson", "LastName", "desc", 1, "Bob")]
+    [TestCase("LastName", "Johnson", "LastName", "asc", 1, "Bob")]
+    public async Task GetEmployees_WithSearchAndOrdering_ReturnsFilteredOrderedList(string searchField,string searchTerm,string orderBy,string direction,int count, string exptectedName)
     {
        
         var db = await SeedTestData();
@@ -83,10 +91,10 @@ using Microsoft.EntityFrameworkCore;
 
         var filter = new FilterCollection
         {
-            SearchField = "FirstName",
-            SearchTerm = "Alice",
-            OrderBy = "HireDate",
-            Direction = "desc"
+            SearchField = searchField,
+            SearchTerm = searchTerm,
+            OrderBy = orderBy,
+            Direction = direction
         };
 
         var result = await controller.GetEmployees(filter);
@@ -96,9 +104,9 @@ using Microsoft.EntityFrameworkCore;
         var employees = (result.Result as OkObjectResult)?.Value as IEnumerable<EmployeeDto>;
 
         var list = employees.ToList();
-        Assert.That(list!.Count(), Is.EqualTo(1));
-        Assert.That(list[0].FirstName, Is.EqualTo("Alice"));
-        Assert.That(list[0].LastName, Is.EqualTo("Smith"));
+        Assert.That(list!.Count(), Is.EqualTo(count));
+        if (count > 0)
+            Assert.That(list[0].FirstName, Is.EqualTo(exptectedName));
 
     }
 
