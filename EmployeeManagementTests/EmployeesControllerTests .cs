@@ -41,7 +41,7 @@ using System.ComponentModel;
                 Id = 1,
                 FirstName = "Alice",
                 LastName = "Smith",
-                HireDate = new DateTime(2020, 1, 1),
+                HireDate = new DateTime(2023, 1, 1),
                 Email = "alice@test.com",
                 EmployeeSkills = new List<EmployeeSkill>
                 {
@@ -53,14 +53,25 @@ using System.ComponentModel;
                 Id = 2,
                 FirstName = "Bob",
                 LastName = "Johnson",
-                HireDate = new DateTime(2021, 5, 5),
+                HireDate = new DateTime(2024, 5, 5),
                 Email = "bob@test.com",
                 EmployeeSkills = new List<EmployeeSkill>
                 {
                     new EmployeeSkill { Skill = new Skill { Name = "SQL" } }
                 }
+            },
+            new Employee { Id = 3, 
+                FirstName = "Charlie", 
+                LastName = "Brown",
+                HireDate = new DateTime(2025, 5, 5),
+                Email = "charlie@test.com",
+                EmployeeSkills = new List<EmployeeSkill>
+                {
+                    new EmployeeSkill { Skill = new Skill { Name = "Java" } }
+                }
             }
         );
+           
 
         await _dbContext.SaveChangesAsync();
         return _dbContext;
@@ -128,7 +139,7 @@ using System.ComponentModel;
         var employees = (result.Result as OkObjectResult)?.Value as IEnumerable<EmployeeDto>;    
 
         var list = employees.ToList();
-        Assert.That(list!.Count(), Is.EqualTo(2));
+        Assert.That(list!.Count(), Is.EqualTo(3));
     }
 
         [Test]
@@ -232,5 +243,56 @@ using System.ComponentModel;
 
             Assert.That(!updated.EmployeeSkills.Any());
         }
+
+    [Test]
+    public async Task DeleteEmployees_WithValidIds_RemovesEmployeesAndReturnsNoContent()
+    {
+        
+        var db = await SeedTestData();
+        var controller = new EmployeesController(db);
+        var idsToDelete = new List<int> { 1, 2 };
+
+        
+        var result = await controller.DeleteEmployees(idsToDelete);
+
+        
+        Assert.That(result, Is.TypeOf<NoContentResult>());
+
+        var remaining = await db.Employees.ToListAsync();
+        Assert.That(remaining.Count, Is.EqualTo(1));
+        Assert.That(remaining[0].Id, Is.EqualTo(3));
     }
+
+    [Test]
+    public async Task DeleteEmployees_WithEmptyList_ReturnsBadRequest()
+    {
+        
+        var db = await SeedTestData();
+        var controller = new EmployeesController(db);
+
+        
+        var result = await controller.DeleteEmployees(new List<int>());
+
+        
+        Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
+        var badRequest = result as BadRequestObjectResult;
+        Assert.That(badRequest!.Value, Is.EqualTo("No employee IDs provided."));
+    }
+
+    [Test]
+    public async Task DeleteEmployees_WithNonExistingIds_ReturnsNotFound()
+    {        
+        var db = await SeedTestData();
+        var controller = new EmployeesController(db);
+
+        var result = await controller.DeleteEmployees(new List<int> { 99, 100 });
+
+        Assert.That(result, Is.TypeOf<NotFoundObjectResult>());
+        var notFound = result as NotFoundObjectResult;
+        Assert.That(notFound!.Value, Is.EqualTo("No matching employees found."));
+
+        var remaining = await db.Employees.ToListAsync();
+        Assert.That(remaining.Count, Is.EqualTo(3));
+    }
+}
 

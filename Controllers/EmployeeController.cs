@@ -121,6 +121,26 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
+    [HttpDelete]
+    public async Task<IActionResult> DeleteEmployees([FromBody] List<int> ids)
+    {
+        if (ids == null || ids.Count == 0)
+            return BadRequest("No employee IDs provided.");
+
+        var employees = await db.Employees
+            .Where(e => ids.Contains(e.Id))
+            .ToListAsync();
+
+        if (employees.Count == 0)
+            return NotFound("No matching employees found.");
+
+        db.Employees.RemoveRange(employees);
+        await db.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+
     [HttpPost("{id:int}/skills")]
     public async Task<IActionResult> AddSkill(int id, AddSkillDto dto)
     {
