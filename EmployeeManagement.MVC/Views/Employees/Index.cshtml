@@ -1,30 +1,44 @@
 ﻿@model IEnumerable<EmployeeManagement.Models.Employee>
 
-<h2>Employees</h2>
+<h2 class="mb-4">Employees</h2>
 
-<form asp-action="Index" method="get">
-    <input type="text" name="search"
-           value="@ViewData["CurrentSearch"]"
-           placeholder="Search by name..." />
-    <button type="submit">Search</button>
-</form>
+<div class="row mb-3">
+    <div class="col-md-6">
+        <form asp-action="Index" method="get" class="d-flex">
+            <input type="text" name="search"
+                   value="@ViewData["CurrentSearch"]"
+                   class="form-control me-2"
+                   placeholder="Search by name..." />
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+    <div class="col-md-6 text-end">
+        <a asp-action="Create" class="btn btn-success">+ Create New Employee</a>
+    </div>
+</div>
 
-<a asp-action="Create">Create New Employee</a>
-
-<table class="table">
-    <thead>
+<table class="table table-striped table-hover align-middle">
+    <thead class="table-dark">
         <tr>
             <th>
-                <a asp-action="Index" asp-route-sortBy="lastname_asc">Last Name ↑</a> |
-                <a asp-action="Index" asp-route-sortBy="lastname_desc">↓</a>
+                <a asp-action="Index" asp-route-sortBy="lastname_asc" class="link-light text-decoration-none">
+                    Last Name ↑
+                </a> |
+                <a asp-action="Index" asp-route-sortBy="lastname_desc" class="link-light text-decoration-none">
+                    ↓
+                </a>
             </th>
             <th>First Name</th>
             <th>Email</th>
             <th>
-                <a asp-action="Index" asp-route-sortBy="hiredate_asc">Hire Date ↑</a> |
-                <a asp-action="Index" asp-route-sortBy="hiredate_desc">↓</a>
+                <a asp-action="Index" asp-route-sortBy="hiredate_asc" class="link-light text-decoration-none">
+                    Hire Date ↑
+                </a> |
+                <a asp-action="Index" asp-route-sortBy="hiredate_desc" class="link-light text-decoration-none">
+                    ↓
+                </a>
             </th>
-            <th></th>
+            <th class="text-center">Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -35,10 +49,10 @@
                 <td>@emp.FirstName</td>
                 <td>@emp.Email</td>
                 <td>@emp.HireDate.ToShortDateString()</td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@emp.Id">Details</a> |
-                    <a asp-action="Edit" asp-route-id="@emp.Id">Edit</a> |
-                    <a asp-action="Delete" asp-route-id="@emp.Id">Delete</a>
+                <td class="text-center">
+                    <a asp-action="Details" asp-route-id="@emp.Id" class="btn btn-sm btn-info me-1">Details</a>
+                    <a asp-action="Edit" asp-route-id="@emp.Id" class="btn btn-sm btn-warning me-1">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@emp.Id" class="btn btn-sm btn-danger">Delete</a>
                 </td>
             </tr>
         }
