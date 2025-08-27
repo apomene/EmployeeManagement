@@ -25,7 +25,8 @@ public class EmployeesController(AppDbContext db) : ControllerBase
                 e.LastName,
                 e.HireDate,
                 e.Email,
-                e.EmployeeSkills.Select(es => es.Skill.Name).ToList()
+                e.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
+                e.DepartmentId
             )).ToListAsync();
 
         return Ok(employees);
@@ -41,14 +42,15 @@ public class EmployeesController(AppDbContext db) : ControllerBase
             .FirstOrDefaultAsync(emp => emp.Id == id);
 
         if (e == null) return NotFound();
-
+     
         var dto = new EmployeeDto(
             e.Id,
             e.FirstName,
             e.LastName,
             e.HireDate,
             e.Email,
-            e.EmployeeSkills.Select(es => es.Skill.Name).ToList()
+            e.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
+            e.DepartmentId
         );
 
         return Ok(dto);
@@ -57,12 +59,18 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<EmployeeDto>> CreateEmployee(CreateEmployeeDto dto)
     {
+        var department = await db.Departments.FindAsync(dto.DepartmentId);
+        if (department == null)
+            return BadRequest("Invalid DepartmentId");
+
         var employee = new Employee
         {
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             HireDate = dto.HireDate,
-            Email = dto.Email
+            Email = dto.Email,
+            DepartmentId = dto.DepartmentId
+
 
         };
 
@@ -89,7 +97,8 @@ public class EmployeesController(AppDbContext db) : ControllerBase
             employee.LastName,
             employee.HireDate,
             employee.Email,
-            employee.EmployeeSkills.Select(es => es.Skill.Name).ToList()
+            employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
+            employee.DepartmentId
         );
 
         return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, resultDto);

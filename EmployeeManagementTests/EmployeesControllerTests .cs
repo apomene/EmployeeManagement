@@ -152,7 +152,8 @@ namespace EmployeeManagement.Tests
                 "Doe",
                 DateTime.UtcNow,
                 "john.doe@yahoo.com",
-                new List<string> { "C#" }
+                new List<string> { "C#" },
+                1
             );
 
             var result = await _controller.CreateEmployee(dto);

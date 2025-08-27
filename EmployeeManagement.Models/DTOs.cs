@@ -10,14 +10,16 @@ namespace EmployeeManagement.Models
         string LastName,
         DateTime HireDate,
         string Email,
-        List<string> Skills);
+        List<string> Skills,
+        int DepartmentId);
 
     public record CreateEmployeeDto(
         [Required] string FirstName,
         [Required] string LastName,
         DateTime HireDate,
         string Email,
-        List<string>? Skills);
+        List<string>? Skills,
+        int DepartmentId);
 
     public record UpdateEmployeeDto(
         [Required] string FirstName,
