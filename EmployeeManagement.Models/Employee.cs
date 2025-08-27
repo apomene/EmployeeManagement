@@ -10,7 +10,7 @@
         public DateTime HireDate { get; set; } = DateTime.UtcNow;
 
         public int DepartmentId { get; set; }    
-        public Department Department { get; set; } = null!; // Navigation property
+        public Department? Department { get; set; } = null!; // Navigation property
 
         public ICollection<EmployeeSkill> EmployeeSkills { get; set; } = new List<EmployeeSkill>();
 

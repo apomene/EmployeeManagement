@@ -66,6 +66,17 @@ namespace EmployeeManagement.MVC.Controllers
         {
             if (!ModelState.IsValid)
             {
+                // Log or inspect which fields are invalid
+                foreach (var entry in ModelState)
+                {
+                    var key = entry.Key;
+                    var errors = entry.Value.Errors;
+                    foreach (var error in errors)
+                    {
+                        Console.WriteLine($"Property '{key}' is invalid: {error.ErrorMessage}");
+                    }
+                }
+
                 var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");
                 ViewData["Departments"] = new SelectList(departments, "Id", "Name", employee.DepartmentId);
                 return View(employee);
@@ -89,7 +100,7 @@ namespace EmployeeManagement.MVC.Controllers
             if (employee == null) return NotFound();
 
             
-            var departments = await _http.GetFromJsonAsync<List<Department>>(StringConstants.DEPARTMENTS);
+            var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");
             ViewData["Departments"] = new SelectList(departments, "Id", "Name", employee.DepartmentId);
 
             return View(employee);
