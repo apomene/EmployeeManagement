@@ -97,6 +97,22 @@ namespace EmployeeManagement.Tests
         }
 
         [Test]
+        public async Task CreateSkill_DuplicateName_ReturnsNotAllowed()
+        {
+            var newSkill = new CreateSkillDto("NewSkill", "NewDesc");
+
+            var result = await _controller.CreateSkill(newSkill);
+
+            // Assert
+            Assert.That(result.Result, Is.InstanceOf<ObjectResult>());
+            var objectResult = result.Result as ObjectResult;
+            Assert.That(objectResult!.StatusCode, Is.EqualTo(405));
+            Assert.That(objectResult.Value, Is.EqualTo("Skill with the same name already exists"));
+
+            Assert.That(_dbContext.Skills.Count(), Is.EqualTo(2));
+        }
+
+        [Test]
         public async Task UpdateSkill_ValidUpdate_ReturnsNoContentAndUpdatesDb()
         {
             var updated = new UpdateSkillDto(1,"UpdatedName", "UpdatedDesc" );
