@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EmployeeManagement.API.csproj" />
+    <ProjectReference Include="..\EmployeeManagement.Models\EmployeeManagement.Models.csproj" />
   </ItemGroup>
 
   <ItemGroup>
