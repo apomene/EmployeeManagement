@@ -10,7 +10,7 @@ namespace EmployeeManagement.Controllers
 
         public SkillsController(IHttpClientFactory factory)
         {
-            _http = factory.CreateClient("SkillsApi");
+            _http = factory.CreateClient("EmployeesAPI");
         }
 
         // Page A: List skills

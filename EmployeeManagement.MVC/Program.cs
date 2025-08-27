@@ -4,7 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddHttpClient("EmployeesAPI", c =>
-    c.BaseAddress = new Uri("https://localhost:5001/")); // API base
+    c.BaseAddress = new Uri("https://localhost:7059/api/")); // API base
 
 var app = builder.Build();
 
@@ -25,7 +25,7 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=Skills}/{action=Index}/{id?}")
     .WithStaticAssets();
 
 
