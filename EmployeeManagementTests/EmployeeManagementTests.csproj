@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EmployeeManagement.csproj" />
+    <ProjectReference Include="..\EmployeeManagement.API.csproj" />
   </ItemGroup>
 
   <ItemGroup>

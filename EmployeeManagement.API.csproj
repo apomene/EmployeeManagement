@@ -8,9 +8,13 @@
 
   <ItemGroup>
     <Compile Remove="EmployeeManagementTests\**" />
+    <Compile Remove="wwwroot\**" />
     <Content Remove="EmployeeManagementTests\**" />
+    <Content Remove="wwwroot\**" />
     <EmbeddedResource Remove="EmployeeManagementTests\**" />
+    <EmbeddedResource Remove="wwwroot\**" />
     <None Remove="EmployeeManagementTests\**" />
+    <None Remove="wwwroot\**" />
   </ItemGroup>
 
   <ItemGroup>
