@@ -4,10 +4,10 @@ using EmployeeManagement.Models;
 using EmployeeManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel;
 
-
-[TestFixture]
+namespace EmployeeManagement.Tests
+{
+    [TestFixture]
     public class EmployeesControllerTests
     {
         private EmployeesController _controller;
@@ -32,115 +32,117 @@ using System.ComponentModel;
             return new AppDbContext(options);
         }
 
-    private async Task<AppDbContext> SeedTestData()
-    {
+        private async Task<AppDbContext> SeedTestData()
+        {
 
-        _dbContext.Employees.AddRange(
-            new Employee
-            {
-                Id = 1,
-                FirstName = "Alice",
-                LastName = "Smith",
-                HireDate = new DateTime(2023, 1, 1),
-                Email = "alice@test.com",
-                EmployeeSkills = new List<EmployeeSkill>
+            _dbContext.Employees.AddRange(
+                new Employee
                 {
+                    Id = 1,
+                    FirstName = "Alice",
+                    LastName = "Smith",
+                    HireDate = new DateTime(2023, 1, 1),
+                    Email = "alice@test.com",
+                    EmployeeSkills = new List<EmployeeSkill>
+                    {
                     new EmployeeSkill { Skill = new Skill { Name = "C#" } }
-                }
-            },
-            new Employee
-            {
-                Id = 2,
-                FirstName = "Bob",
-                LastName = "Johnson",
-                HireDate = new DateTime(2024, 5, 5),
-                Email = "bob@test.com",
-                EmployeeSkills = new List<EmployeeSkill>
+                    }
+                },
+                new Employee
                 {
+                    Id = 2,
+                    FirstName = "Bob",
+                    LastName = "Johnson",
+                    HireDate = new DateTime(2024, 5, 5),
+                    Email = "bob@test.com",
+                    EmployeeSkills = new List<EmployeeSkill>
+                    {
                     new EmployeeSkill { Skill = new Skill { Name = "SQL" } }
-                }
-            },
-            new Employee { Id = 3, 
-                FirstName = "Charlie", 
-                LastName = "Brown",
-                HireDate = new DateTime(2025, 5, 5),
-                Email = "charlie@test.com",
-                EmployeeSkills = new List<EmployeeSkill>
+                    }
+                },
+                new Employee
                 {
+                    Id = 3,
+                    FirstName = "Charlie",
+                    LastName = "Brown",
+                    HireDate = new DateTime(2025, 5, 5),
+                    Email = "charlie@test.com",
+                    EmployeeSkills = new List<EmployeeSkill>
+                    {
                     new EmployeeSkill { Skill = new Skill { Name = "Java" } }
+                    }
                 }
-            }
-        );
-           
+            );
 
-        await _dbContext.SaveChangesAsync();
-        return _dbContext;
-    }
 
-    private Employee CreateEmployee(string firstName, string lastName)
-            => new Employee
+            await _dbContext.SaveChangesAsync();
+            return _dbContext;
+        }
+
+        private Employee CreateEmployee(string firstName, string lastName)
+                => new Employee
+                {
+                    FirstName = firstName,
+                    LastName = lastName,
+                    HireDate = DateTime.UtcNow,
+                    Email = $"{firstName.ToLower()}.{lastName.ToLower()}@example.com"
+                };
+
+        [Test]
+        [TestCase("FirstName", "John", "HireDate", "desc", 0, "")]
+        [TestCase("FirstName", "Alice", "HireDate", "desc", 1, "Alice")]
+        [TestCase("FirstName", "Alice", "LastName", "asc", 1, "Alice")]
+        [TestCase("FirstName", "Alice", "FirstName", "asc", 1, "Alice")]
+        [TestCase("LastName", "Johnson", "HireDate", "desc", 1, "Bob")]
+        [TestCase("LastName", "Johnson", "LastName", "desc", 1, "Bob")]
+        [TestCase("LastName", "Johnson", "LastName", "asc", 1, "Bob")]
+        public async Task GetEmployees_WithSearchAndOrdering_ReturnsFilteredOrderedList(string searchField, string searchTerm, string orderBy, string direction, int count, string exptectedName)
+        {
+
+            var db = await SeedTestData();
+            var controller = new EmployeesController(db);
+
+            var filter = new FilterCollection
             {
-                FirstName = firstName,
-                LastName = lastName,
-                HireDate = DateTime.UtcNow,
-                Email = $"{firstName.ToLower()}.{lastName.ToLower()}@example.com"
+                SearchField = searchField,
+                SearchTerm = searchTerm,
+                OrderBy = orderBy,
+                Direction = direction
             };
 
-    [Test]
-    [TestCase("FirstName", "John", "HireDate", "desc", 0, "")]
-    [TestCase("FirstName", "Alice", "HireDate", "desc", 1 ,"Alice")]
-    [TestCase("FirstName", "Alice", "LastName", "asc", 1, "Alice")]
-    [TestCase("FirstName", "Alice", "FirstName", "asc", 1, "Alice")]
-    [TestCase("LastName", "Johnson", "HireDate", "desc", 1, "Bob")]
-    [TestCase("LastName", "Johnson", "LastName", "desc", 1, "Bob")]
-    [TestCase("LastName", "Johnson", "LastName", "asc", 1, "Bob")]
-    public async Task GetEmployees_WithSearchAndOrdering_ReturnsFilteredOrderedList(string searchField,string searchTerm,string orderBy,string direction,int count, string exptectedName)
-    {
-       
-        var db = await SeedTestData();
-        var controller = new EmployeesController(db);
+            var result = await controller.GetEmployees(filter);
 
-        var filter = new FilterCollection
+            Assert.That(result.Result, Is.InstanceOf<OkObjectResult>());
+
+            var employees = (result.Result as OkObjectResult)?.Value as IEnumerable<EmployeeDto>;
+
+            var list = employees.ToList();
+            Assert.That(list!.Count(), Is.EqualTo(count));
+            if (count > 0)
+                Assert.That(list[0].FirstName, Is.EqualTo(exptectedName));
+
+        }
+
+        [Test]
+        public async Task GetEmployees_WithoutFilter_ReturnsAll()
         {
-            SearchField = searchField,
-            SearchTerm = searchTerm,
-            OrderBy = orderBy,
-            Direction = direction
-        };
+            // Arrange
+            var db = await SeedTestData();
+            var controller = new EmployeesController(db);
 
-        var result = await controller.GetEmployees(filter);
+            var filter = new FilterCollection(); // no search/order
 
-        Assert.That(result.Result, Is.InstanceOf<OkObjectResult>());
-        
-        var employees = (result.Result as OkObjectResult)?.Value as IEnumerable<EmployeeDto>;
+            // Act
+            var result = await controller.GetEmployees(filter);
 
-        var list = employees.ToList();
-        Assert.That(list!.Count(), Is.EqualTo(count));
-        if (count > 0)
-            Assert.That(list[0].FirstName, Is.EqualTo(exptectedName));
+            // Assert
+            Assert.That(result.Result, Is.InstanceOf<OkObjectResult>());
 
-    }
+            var employees = (result.Result as OkObjectResult)?.Value as IEnumerable<EmployeeDto>;
 
-    [Test]
-    public async Task GetEmployees_WithoutFilter_ReturnsAll()
-    {
-        // Arrange
-        var db = await SeedTestData();
-        var controller = new EmployeesController(db);
-
-        var filter = new FilterCollection(); // no search/order
-
-        // Act
-        var result = await controller.GetEmployees(filter);
-
-        // Assert
-        Assert.That(result.Result, Is.InstanceOf<OkObjectResult>());
-
-        var employees = (result.Result as OkObjectResult)?.Value as IEnumerable<EmployeeDto>;    
-
-        var list = employees.ToList();
-        Assert.That(list!.Count(), Is.EqualTo(3));
-    }
+            var list = employees.ToList();
+            Assert.That(list!.Count(), Is.EqualTo(3));
+        }
 
         [Test]
         public async Task CreateEmployee_AddsEmployee()
@@ -160,7 +162,7 @@ using System.ComponentModel;
             Assert.That(created!.FirstName, Is.EqualTo("John"));
             Assert.That(created.Skills.Single(), Is.EqualTo("C#"));
         }
-       
+
 
         [Test]
         public async Task GetEmployee_ReturnsSingleEmployee()
@@ -183,7 +185,7 @@ using System.ComponentModel;
             _dbContext.Employees.Add(emp);
             await _dbContext.SaveChangesAsync();
 
-            var dto = new UpdateEmployeeDto("EveUpdated", "JonesUpdated" ,emp.Email,DateTime.UtcNow);
+            var dto = new UpdateEmployeeDto("EveUpdated", "JonesUpdated", emp.Email, DateTime.UtcNow);
             var result = await _controller.UpdateEmployee(emp.Id, dto);
 
             Assert.That(result, Is.InstanceOf<NoContentResult>());
@@ -244,55 +246,57 @@ using System.ComponentModel;
             Assert.That(!updated.EmployeeSkills.Any());
         }
 
-    [Test]
-    public async Task DeleteEmployees_WithValidIds_RemovesEmployeesAndReturnsNoContent()
-    {
-        
-        var db = await SeedTestData();
-        var controller = new EmployeesController(db);
-        var idsToDelete = new List<int> { 1, 2 };
+        [Test]
+        public async Task DeleteEmployees_WithValidIds_RemovesEmployeesAndReturnsNoContent()
+        {
 
-        
-        var result = await controller.DeleteEmployees(idsToDelete);
+            var db = await SeedTestData();
+            var controller = new EmployeesController(db);
+            var idsToDelete = new List<int> { 1, 2 };
 
-        
-        Assert.That(result, Is.TypeOf<NoContentResult>());
 
-        var remaining = await db.Employees.ToListAsync();
-        Assert.That(remaining.Count, Is.EqualTo(1));
-        Assert.That(remaining[0].Id, Is.EqualTo(3));
+            var result = await controller.DeleteEmployees(idsToDelete);
+
+
+            Assert.That(result, Is.TypeOf<NoContentResult>());
+
+            var remaining = await db.Employees.ToListAsync();
+            Assert.That(remaining.Count, Is.EqualTo(1));
+            Assert.That(remaining[0].Id, Is.EqualTo(3));
+        }
+
+        [Test]
+        public async Task DeleteEmployees_WithEmptyList_ReturnsBadRequest()
+        {
+
+            var db = await SeedTestData();
+            var controller = new EmployeesController(db);
+
+
+            var result = await controller.DeleteEmployees(new List<int>());
+
+
+            Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
+            var badRequest = result as BadRequestObjectResult;
+            Assert.That(badRequest!.Value, Is.EqualTo(StringConstants.NO_EMPLOYEE_ID));
+        }
+
+        [Test]
+        public async Task DeleteEmployees_WithNonExistingIds_ReturnsNotFound()
+        {
+            var db = await SeedTestData();
+            var controller = new EmployeesController(db);
+
+            var result = await controller.DeleteEmployees(new List<int> { 99, 100 });
+
+            Assert.That(result, Is.TypeOf<NotFoundObjectResult>());
+            var notFound = result as NotFoundObjectResult;
+            Assert.That(notFound!.Value, Is.EqualTo(StringConstants.NO_MATCHING_EMPLOYEES));
+
+            var remaining = await db.Employees.ToListAsync();
+            Assert.That(remaining.Count, Is.EqualTo(3));
+        }
     }
 
-    [Test]
-    public async Task DeleteEmployees_WithEmptyList_ReturnsBadRequest()
-    {
-        
-        var db = await SeedTestData();
-        var controller = new EmployeesController(db);
 
-        
-        var result = await controller.DeleteEmployees(new List<int>());
-
-        
-        Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
-        var badRequest = result as BadRequestObjectResult;
-        Assert.That(badRequest!.Value, Is.EqualTo(StringConstants.NO_EMPLOYEE_ID));
-    }
-
-    [Test]
-    public async Task DeleteEmployees_WithNonExistingIds_ReturnsNotFound()
-    {        
-        var db = await SeedTestData();
-        var controller = new EmployeesController(db);
-
-        var result = await controller.DeleteEmployees(new List<int> { 99, 100 });
-
-        Assert.That(result, Is.TypeOf<NotFoundObjectResult>());
-        var notFound = result as NotFoundObjectResult;
-        Assert.That(notFound!.Value, Is.EqualTo(StringConstants.NO_MATCHING_EMPLOYEES));
-
-        var remaining = await db.Employees.ToListAsync();
-        Assert.That(remaining.Count, Is.EqualTo(3));
-    }
 }
-

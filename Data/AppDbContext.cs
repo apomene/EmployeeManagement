@@ -5,7 +5,7 @@ namespace EmployeeManagement.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<Skill> Skills {get;set;}
+    public DbSet<Skill> Skills { get; set; }
     public DbSet<Employee> Employees { get; set; }
 
     public DbSet<EmployeeSkill> EmployeeSkills { get; set; }
@@ -16,6 +16,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         modelBuilder.Entity<EmployeeSkill>()
             .HasKey(es => new { es.EmployeeId, es.SkillId });
+
+        modelBuilder.Entity<Employee>()
+       .HasOne(e => e.Department)
+       .WithMany(d => d.Employees)
+       .HasForeignKey(e => e.DepartmentId);
 
         modelBuilder.Entity<EmployeeSkill>()
             .HasOne(es => es.Employee)

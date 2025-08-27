@@ -141,7 +141,7 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     }
 
 
-    [HttpPost("{id:int}/skills")]
+    [HttpPost("{id:int}/{StringConstants}")]
     public async Task<IActionResult> AddSkill(int id, AddSkillDto dto)
     {
         var employee = await db.Employees
