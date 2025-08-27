@@ -1,18 +1,10 @@
-using EmployeeManagement.Data;
-using Microsoft.EntityFrameworkCore;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
 
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-// Add SQLite database
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(connectionString));
-
+builder.Services.AddHttpClient("EmployeesAPI", c =>
+    c.BaseAddress = new Uri("https://localhost:5001/")); // API base
 
 var app = builder.Build();
 
@@ -24,7 +16,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-
 app.UseHttpsRedirection();
 app.UseRouting();
 
@@ -32,6 +23,10 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 
-app.MapControllers();
- 
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}")
+    .WithStaticAssets();
+
+
 app.Run();

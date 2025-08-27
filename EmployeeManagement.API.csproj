@@ -7,14 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="EmployeeManagement.MVC\**" />
     <Compile Remove="EmployeeManagementTests\**" />
     <Compile Remove="wwwroot\**" />
+    <Content Remove="EmployeeManagement.MVC\**" />
     <Content Remove="EmployeeManagementTests\**" />
     <Content Remove="wwwroot\**" />
+    <EmbeddedResource Remove="EmployeeManagement.MVC\**" />
     <EmbeddedResource Remove="EmployeeManagementTests\**" />
     <EmbeddedResource Remove="wwwroot\**" />
+    <None Remove="EmployeeManagement.MVC\**" />
     <None Remove="EmployeeManagementTests\**" />
     <None Remove="wwwroot\**" />
+     <Compile Remove="../EmployeeManagement.Mvc/**" />
   </ItemGroup>
 
   <ItemGroup>
