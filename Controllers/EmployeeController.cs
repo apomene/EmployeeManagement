@@ -125,14 +125,14 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> DeleteEmployees([FromBody] List<int> ids)
     {
         if (ids == null || ids.Count == 0)
-            return BadRequest("No employee IDs provided.");
+            return BadRequest(StringConstants.NO_EMPLOYEE_ID);
 
         var employees = await db.Employees
             .Where(e => ids.Contains(e.Id))
             .ToListAsync();
 
         if (employees.Count == 0)
-            return NotFound("No matching employees found.");
+            return NotFound(StringConstants.NO_MATCHING_EMPLOYEES);
 
         db.Employees.RemoveRange(employees);
         await db.SaveChangesAsync();

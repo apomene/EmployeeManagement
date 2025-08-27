@@ -276,7 +276,7 @@ using System.ComponentModel;
         
         Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
         var badRequest = result as BadRequestObjectResult;
-        Assert.That(badRequest!.Value, Is.EqualTo("No employee IDs provided."));
+        Assert.That(badRequest!.Value, Is.EqualTo(StringConstants.NO_EMPLOYEE_ID));
     }
 
     [Test]
@@ -289,7 +289,7 @@ using System.ComponentModel;
 
         Assert.That(result, Is.TypeOf<NotFoundObjectResult>());
         var notFound = result as NotFoundObjectResult;
-        Assert.That(notFound!.Value, Is.EqualTo("No matching employees found."));
+        Assert.That(notFound!.Value, Is.EqualTo(StringConstants.NO_MATCHING_EMPLOYEES));
 
         var remaining = await db.Employees.ToListAsync();
         Assert.That(remaining.Count, Is.EqualTo(3));

@@ -18,14 +18,14 @@ namespace EmployeeManagement.Controllers
         // Page A: List skills
         public async Task<IActionResult> Index()
         {
-            var skills = await _http.GetFromJsonAsync<IEnumerable<Skill>>("skills");
+            var skills = await _http.GetFromJsonAsync<IEnumerable<Skill>>(StringConstants.SKILLS);
             return View(skills);
         }
 
         // Page B: Details
         public async Task<IActionResult> Details(int id)
         {
-            var skill = await _http.GetFromJsonAsync<Skill>($"skills/{id}");
+            var skill = await _http.GetFromJsonAsync<Skill>($"{StringConstants.SKILLS}/{id}");
             if (skill == null) return NotFound();
             return View(skill);
         }
@@ -37,18 +37,18 @@ namespace EmployeeManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Skill skill)
         {
-            var response = await _http.PostAsJsonAsync("skills", skill);
+            var response = await _http.PostAsJsonAsync(StringConstants.SKILLS, skill);
             if (response.IsSuccessStatusCode)
                 return RedirectToAction(nameof(Index));
 
-            ModelState.AddModelError("", "Error creating skill");
+            ModelState.AddModelError("", StringConstants.ERROR_DELETE_SKILL);
             return View(skill);
         }
 
         // Edit
         public async Task<IActionResult> Edit(int id)
         {
-            var skill = await _http.GetFromJsonAsync<Skill>($"skills/{id}");
+            var skill = await _http.GetFromJsonAsync<Skill>($"{StringConstants.SKILLS}/{id}");
             if (skill == null) return NotFound();
             return View(skill);
         }
@@ -57,18 +57,18 @@ namespace EmployeeManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Skill skill)
         {
-            var response = await _http.PutAsJsonAsync($"skills/{id}", skill);
+            var response = await _http.PutAsJsonAsync($"{StringConstants.SKILLS}/{id}", skill);
             if (response.IsSuccessStatusCode)
                 return RedirectToAction(nameof(Index));
 
-            ModelState.AddModelError("", "Error updating skill");
+            ModelState.AddModelError("", StringConstants.ERROR_UPDATE_SKILL);
             return View(skill);
         }
 
         // Delete
         public async Task<IActionResult> Delete(int id)
         {
-            var skill = await _http.GetFromJsonAsync<Skill>($"skills/{id}");
+            var skill = await _http.GetFromJsonAsync<Skill>($"{StringConstants.SKILLS}/{id}");
             if (skill == null) return NotFound();
             return View(skill);
         }
@@ -77,11 +77,11 @@ namespace EmployeeManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var response = await _http.DeleteAsync($"skills/{id}");
+            var response = await _http.DeleteAsync($"{StringConstants.SKILLS}/{id}");
             if (response.IsSuccessStatusCode)
                 return RedirectToAction(nameof(Index));
 
-            ModelState.AddModelError("", "Error deleting skill");
+            ModelState.AddModelError("", StringConstants.ERROR_DELETE_SKILL);
             return RedirectToAction(nameof(Index));
         }
     }

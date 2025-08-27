@@ -40,7 +40,7 @@ public class SkillsController(AppDbContext db) : ControllerBase
             .FirstOrDefaultAsync(s => s.Name.ToLower() == dto.Name.ToLower());
 
         if (existing != null)
-            return StatusCode(StatusCodes.Status405MethodNotAllowed, "Skill with the same name already exists");
+            return StatusCode(StatusCodes.Status405MethodNotAllowed, StringConstants.SKILL_EXISTS);
 
         var skill = new Skill
         {
@@ -59,7 +59,7 @@ public class SkillsController(AppDbContext db) : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateSkill(int id, [FromBody] UpdateSkillDto dto)
     {
-        if (id != dto.Id) return BadRequest("ID mismatch");
+        if (id != dto.Id) return BadRequest(StringConstants.ID_MISMATCH);
 
         var existing = await FindSkillAsync(id);
         if (existing is null) return NotFound();

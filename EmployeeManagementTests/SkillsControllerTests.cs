@@ -108,7 +108,7 @@ namespace EmployeeManagement.Tests
             Assert.That(result.Result, Is.InstanceOf<ObjectResult>());
             var objectResult = result.Result as ObjectResult;
             Assert.That(objectResult!.StatusCode, Is.EqualTo(405));
-            Assert.That(objectResult.Value, Is.EqualTo("Skill with the same name already exists"));
+            Assert.That(objectResult.Value, Is.EqualTo(StringConstants.SKILL_EXISTS));
 
             Assert.That(_dbContext.Skills.Count(), Is.EqualTo(2));
         }
