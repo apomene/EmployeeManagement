@@ -61,7 +61,7 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     {
         var department = await db.Departments.FindAsync(dto.DepartmentId);
         if (department == null)
-            return BadRequest("Invalid DepartmentId");
+            return BadRequest(StringConstants.INVALID_DEPARTMENT);
 
         var employee = new Employee
         {

@@ -74,7 +74,7 @@ namespace EmployeeManagement.Tests
                 }
             );
 
-
+           
             await _dbContext.SaveChangesAsync();
             return _dbContext;
         }
@@ -147,6 +147,13 @@ namespace EmployeeManagement.Tests
         [Test]
         public async Task CreateEmployee_AddsEmployee()
         {
+            _dbContext.Departments.AddRange(new Department
+            {
+                Id = 1,
+                Name = "IT",
+                Description = "The Information Technology department"
+            });
+
             var dto = new CreateEmployeeDto(
                 "John",
                 "Doe",
@@ -162,6 +169,26 @@ namespace EmployeeManagement.Tests
             Assert.That(created, Is.Not.Null);
             Assert.That(created!.FirstName, Is.EqualTo("John"));
             Assert.That(created.Skills.Single(), Is.EqualTo("C#"));
+        }
+
+        [Test]
+        public async Task CreateEmployee_InvalidDepartment_ReturnsBadRequest()
+        {
+            var dto = new CreateEmployeeDto(
+                "John",
+                "Doe",
+                DateTime.UtcNow,
+                "john.doe@yahoo.com",
+                new List<string> { "C#" },
+                999 // Non-existing department ID
+            );
+
+            var result = await _controller.CreateEmployee(dto);
+           
+
+            Assert.That(result.Result, Is.TypeOf<BadRequestObjectResult>());
+            var badRequest = result.Result as BadRequestObjectResult;
+            Assert.That(badRequest!.Value, Is.EqualTo(StringConstants.INVALID_DEPARTMENT));
         }
 
 

@@ -46,5 +46,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             new Skill { Id = 5, Name = "Cloud Computing", Description = "Azure and AWS services", CreatedAt = new DateTime(2025, 1, 1) }
         );
 
+        // Seed initial departments
+        modelBuilder.Entity<Department>().HasData(
+            new Department
+            {
+                Id = 1,
+                Name = "IT",
+                Description = "The Information Technology department"
+            },
+            new Department
+            {
+                Id = 2,
+                Name = "Sales",
+                Description = "The Sales department"
+            },
+            new Department
+            {
+                Id = 3,
+                Name = "Marketing",
+                Description = "The Marketing department"
+            }
+        );
+
     }
 }
