@@ -101,7 +101,8 @@ namespace EmployeeManagement.Tests
         {
             var newSkill = new CreateSkillDto("NewSkill", "NewDesc");
 
-            var result = await _controller.CreateSkill(newSkill);
+            await _controller.CreateSkill(newSkill);
+            var result = await _controller.CreateSkill(newSkill); // Attempt duplicate
 
             // Assert
             Assert.That(result.Result, Is.InstanceOf<ObjectResult>());

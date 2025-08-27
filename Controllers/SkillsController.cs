@@ -34,6 +34,14 @@ public class SkillsController(AppDbContext db) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<SkillDto>> CreateSkill([FromBody] CreateSkillDto dto)
     {
+        // Check if skill with same name exists
+        var existing = await db.Skills
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Name.ToLower() == dto.Name.ToLower());
+
+        if (existing != null)
+            return StatusCode(StatusCodes.Status405MethodNotAllowed, "Skill with the same name already exists");
+
         var skill = new Skill
         {
             Name = dto.Name,
