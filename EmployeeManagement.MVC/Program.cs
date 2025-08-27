@@ -3,8 +3,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddHttpClient("EmployeesAPI", c =>
-    c.BaseAddress = new Uri("https://localhost:7059/api/")); // API base
+
+var apiSettings = builder.Configuration.GetSection("ApiSettings");
+var apiName = apiSettings.GetValue<string>("EmployeesApiName");
+var apiBaseUrl = apiSettings.GetValue<string>("EmployeesApiBaseUrl");
+
+
+builder.Services.AddHttpClient(apiName, c =>
+{
+    c.BaseAddress = new Uri(apiBaseUrl);
+});
 
 var app = builder.Build();
 

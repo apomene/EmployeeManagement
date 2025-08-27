@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Json;
 using EmployeeManagement.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using System.Net.Http.Json;
 
 namespace EmployeeManagement.Controllers
 {
@@ -8,9 +9,10 @@ namespace EmployeeManagement.Controllers
     {
         private readonly HttpClient _http;
 
-        public SkillsController(IHttpClientFactory factory)
+        public SkillsController(IHttpClientFactory factory, IConfiguration configuration)
         {
-            _http = factory.CreateClient("EmployeesAPI");
+            var apiName = configuration.GetValue<string>("ApiSettings:EmployeesApiName");
+            _http = factory.CreateClient(apiName);
         }
 
         // Page A: List skills
