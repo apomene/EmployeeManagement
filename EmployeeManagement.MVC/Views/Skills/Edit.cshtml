@@ -5,16 +5,16 @@
 <form asp-action="Edit" method="post">
     <input type="hidden" asp-for="Id" />
 
-    <div class="form-group m-5pc">
+    <div class="form-group m-5px">
         <label asp-for="Name"></label>
         <input asp-for="Name" class="form-control" />
     </div>
 
-    <div class="form-group m-5pc">
+    <div class="form-group m-5px">
         <label asp-for="Description"></label>
         <textarea asp-for="Description" class="form-control"></textarea>
     </div>
 
-    <button type="submit" class="btn btn-success m-5pc">Update</button>
-    <a class="btn btn-secondary m-5pc" asp-action="Index">Cancel</a>
+    <button type="submit" class="btn btn-success m-5px">Update</button>
+    <a class="btn btn-secondary m-5px" asp-action="Index">Cancel</a>
 </form>
