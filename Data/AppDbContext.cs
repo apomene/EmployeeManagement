@@ -37,6 +37,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Skill>().Property(s => s.CreatedAt)
                     .HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
+      
+
         // Seed initial data
         modelBuilder.Entity<Skill>().HasData(
             new Skill { Id = 1, Name = "C#", Description = "Programming in C#", CreatedAt = new DateTime(2025, 1, 1) },

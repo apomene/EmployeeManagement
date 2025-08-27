@@ -52,7 +52,12 @@ namespace EmployeeManagement.MVC.Controllers
         }
 
         // GET: Employees/Create
-        public IActionResult Create() => View();
+        public async Task<IActionResult> Create()
+        {
+            var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");
+            ViewData["Departments"] = new SelectList(departments, "Id", "Name");
+            return View();
+        }
 
         // POST: Employees/Create
         [HttpPost]
@@ -61,11 +66,10 @@ namespace EmployeeManagement.MVC.Controllers
         {
             if (!ModelState.IsValid)
             {
+                var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");
+                ViewData["Departments"] = new SelectList(departments, "Id", "Name", employee.DepartmentId);
                 return View(employee);
             }
-
-            var departments = await _http.GetFromJsonAsync<List<Department>>(StringConstants.DEPARTMENTS);
-            ViewData["Departments"] = new SelectList(departments, "Id", "Name", employee.DepartmentId);
 
             var response = await _http.PostAsJsonAsync(StringConstants.EMPLOYEES, employee);
             if (response.IsSuccessStatusCode)
@@ -73,9 +77,9 @@ namespace EmployeeManagement.MVC.Controllers
 
             ModelState.AddModelError("", StringConstants.ERROR_CREATE_EMPLOYEE);
             return View(employee);
-
-
         }
+
+     
 
         // GET: Employees/Edit/5
         public async Task<IActionResult> Edit(int id)

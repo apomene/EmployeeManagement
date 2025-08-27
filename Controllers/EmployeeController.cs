@@ -56,6 +56,14 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return Ok(dto);
     }
 
+    [HttpGet("departments")]
+    public async Task<ActionResult<Department>> GetDepartments()
+    {
+        var departments = await db.Departments.AsNoTracking().ToListAsync();
+
+        return Ok(departments);
+    }
+
     [HttpPost]
     public async Task<ActionResult<EmployeeDto>> CreateEmployee(CreateEmployeeDto dto)
     {
