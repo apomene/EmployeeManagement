@@ -1,6 +1,7 @@
 ﻿
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
+using EmployeeManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,7 +31,41 @@ using Microsoft.EntityFrameworkCore;
             return new AppDbContext(options);
         }
 
-        private Employee CreateEmployee(string firstName, string lastName)
+    private async Task<AppDbContext> SeedTestData()
+    {
+
+        _dbContext.Employees.AddRange(
+            new Employee
+            {
+                Id = 1,
+                FirstName = "Alice",
+                LastName = "Smith",
+                HireDate = new DateTime(2020, 1, 1),
+                Email = "alice@test.com",
+                EmployeeSkills = new List<EmployeeSkill>
+                {
+                    new EmployeeSkill { Skill = new Skill { Name = "C#" } }
+                }
+            },
+            new Employee
+            {
+                Id = 2,
+                FirstName = "Bob",
+                LastName = "Johnson",
+                HireDate = new DateTime(2021, 5, 5),
+                Email = "bob@test.com",
+                EmployeeSkills = new List<EmployeeSkill>
+                {
+                    new EmployeeSkill { Skill = new Skill { Name = "SQL" } }
+                }
+            }
+        );
+
+        await _dbContext.SaveChangesAsync();
+        return _dbContext;
+    }
+
+    private Employee CreateEmployee(string firstName, string lastName)
             => new Employee
             {
                 FirstName = firstName,
@@ -38,6 +73,55 @@ using Microsoft.EntityFrameworkCore;
                 HireDate = DateTime.UtcNow,
                 Email = $"{firstName.ToLower()}.{lastName.ToLower()}@example.com"
             };
+
+    [Test]
+    public async Task GetEmployees_WithSearchAndOrdering_ReturnsFilteredOrderedList()
+    {
+       
+        var db = await SeedTestData();
+        var controller = new EmployeesController(db);
+
+        var filter = new FilterCollection
+        {
+            SearchField = "FirstName",
+            SearchTerm = "Alice",
+            OrderBy = "HireDate",
+            Direction = "desc"
+        };
+
+        var result = await controller.GetEmployees(filter);
+
+        Assert.That(result.Result, Is.InstanceOf<OkObjectResult>());
+        
+        var employees = (result.Result as OkObjectResult)?.Value as IEnumerable<EmployeeDto>;
+
+        var list = employees.ToList();
+        Assert.That(list!.Count(), Is.EqualTo(1));
+        Assert.That(list[0].FirstName, Is.EqualTo("Alice"));
+        Assert.That(list[0].LastName, Is.EqualTo("Smith"));
+
+    }
+
+    [Test]
+    public async Task GetEmployees_WithoutFilter_ReturnsAll()
+    {
+        // Arrange
+        var db = await SeedTestData();
+        var controller = new EmployeesController(db);
+
+        var filter = new FilterCollection(); // no search/order
+
+        // Act
+        var result = await controller.GetEmployees(filter);
+
+        // Assert
+        Assert.That(result.Result, Is.InstanceOf<OkObjectResult>());
+
+        var employees = (result.Result as OkObjectResult)?.Value as IEnumerable<EmployeeDto>;    
+
+        var list = employees.ToList();
+        Assert.That(list!.Count(), Is.EqualTo(2));
+    }
 
         [Test]
         public async Task CreateEmployee_AddsEmployee()
@@ -57,20 +141,7 @@ using Microsoft.EntityFrameworkCore;
             Assert.That(created!.FirstName, Is.EqualTo("John"));
             Assert.That(created.Skills.Single(), Is.EqualTo("C#"));
         }
-
-        [Test]
-        public async Task GetEmployees_ReturnsEmployees()
-        {
-            _dbContext.Employees.Add(CreateEmployee("Alice", "Smith"));
-            _dbContext.Employees.Add(CreateEmployee("Bob", "Brown"));
-            await _dbContext.SaveChangesAsync();
-
-            var result = await _controller.GetEmployees();
-            var employees = (result.Result as OkObjectResult)?.Value as IEnumerable<EmployeeDto>;
-
-            Assert.That(employees, Is.Not.Null);
-            Assert.That(employees!.Count(), Is.EqualTo(2));
-        }
+       
 
         [Test]
         public async Task GetEmployee_ReturnsSingleEmployee()

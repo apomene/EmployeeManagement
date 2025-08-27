@@ -1,34 +1,22 @@
 ﻿using EmployeeManagement.Data;
 using EmployeeManagement.Models;
+using EmployeeManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("api/[controller]")]
 public class EmployeesController(AppDbContext db) : ControllerBase
-{
-    // GET api/employees
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetEmployees(
-        string? orderBy = null, string? direction = "asc", string? search = null)
+{    
+    
+    public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetEmployees([FromQuery] FilterCollection filter)
     {
         var query = db.Employees
             .Include(e => e.EmployeeSkills)
             .ThenInclude(es => es.Skill)
-            .AsNoTracking()
-            .AsQueryable();
+            .AsNoTracking();
 
-        if (!string.IsNullOrEmpty(search))
-        {
-            query = query.Where(e => e.FirstName.Contains(search) || e.LastName.Contains(search));
-        }
-
-        query = orderBy?.ToLower() switch
-        {
-            "surname" => direction == "desc" ? query.OrderByDescending(e => e.LastName) : query.OrderBy(e => e.LastName),
-            "hiredate" => direction == "desc" ? query.OrderByDescending(e => e.HireDate) : query.OrderBy(e => e.HireDate),
-            _ => query.OrderBy(e => e.Id)
-        };
+        query = filter.ApplyAll(query);
 
         var employees = await query
             .Select(e => new EmployeeDto(
@@ -43,7 +31,7 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return Ok(employees);
     }
 
-    // GET api/employees/{id}
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<EmployeeDto>> GetEmployee(int id)
     {
@@ -66,7 +54,6 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return Ok(dto);
     }
 
-    // POST api/employees
     [HttpPost]
     public async Task<ActionResult<EmployeeDto>> CreateEmployee(CreateEmployeeDto dto)
     {
@@ -108,7 +95,6 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, resultDto);
     }
 
-    // PUT api/employees/{id}
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateEmployee(int id, UpdateEmployeeDto dto)
     {
@@ -124,7 +110,6 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
-    // DELETE api/employees/{id}
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteEmployee(int id)
     {
@@ -136,7 +121,6 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
-    // POST api/employees/{id}/skills
     [HttpPost("{id:int}/skills")]
     public async Task<IActionResult> AddSkill(int id, AddSkillDto dto)
     {
@@ -162,7 +146,6 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
-    // DELETE api/employees/{id}/skills/{skillId}
     [HttpDelete("{id:int}/skills/{skillId:int}")]
     public async Task<IActionResult> RemoveSkill(int id, int skillId)
     {
