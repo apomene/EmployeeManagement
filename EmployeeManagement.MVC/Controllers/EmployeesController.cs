@@ -1,5 +1,6 @@
 ﻿using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Net.Http.Json;
 
 namespace EmployeeManagement.MVC.Controllers
@@ -35,6 +36,9 @@ namespace EmployeeManagement.MVC.Controllers
                 _ => employees
             };
 
+            ViewData["CurrentSearch"] = search; 
+            ViewData["CurrentSort"] = sortBy;
+
             return View(employees);
         }
 
@@ -55,7 +59,13 @@ namespace EmployeeManagement.MVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Employee employee)
         {
-            if (!ModelState.IsValid) return View(employee);
+            if (!ModelState.IsValid)
+            {
+                return View(employee);
+            }
+
+            var departments = await _http.GetFromJsonAsync<List<Department>>(StringConstants.DEPARTMENTS);
+            ViewData["Departments"] = new SelectList(departments, "Id", "Name", employee.DepartmentId);
 
             var response = await _http.PostAsJsonAsync(StringConstants.EMPLOYEES, employee);
             if (response.IsSuccessStatusCode)
@@ -63,14 +73,23 @@ namespace EmployeeManagement.MVC.Controllers
 
             ModelState.AddModelError("", StringConstants.ERROR_CREATE_EMPLOYEE);
             return View(employee);
+
+
         }
 
         // GET: Employees/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
+           
             var employee = await _http.GetFromJsonAsync<Employee>($"{StringConstants.EMPLOYEES}/{id}");
             if (employee == null) return NotFound();
+
+            
+            var departments = await _http.GetFromJsonAsync<List<Department>>(StringConstants.DEPARTMENTS);
+            ViewData["Departments"] = new SelectList(departments, "Id", "Name", employee.DepartmentId);
+
             return View(employee);
+
         }
 
         // POST: Employees/Edit/5

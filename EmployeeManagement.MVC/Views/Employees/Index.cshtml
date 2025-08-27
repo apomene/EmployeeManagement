@@ -1,0 +1,46 @@
+﻿@model IEnumerable<EmployeeManagement.Models.Employee>
+
+<h2>Employees</h2>
+
+<form asp-action="Index" method="get">
+    <input type="text" name="search"
+           value="@ViewData["CurrentSearch"]"
+           placeholder="Search by name..." />
+    <button type="submit">Search</button>
+</form>
+
+<a asp-action="Create">Create New Employee</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                <a asp-action="Index" asp-route-sortBy="lastname_asc">Last Name ↑</a> |
+                <a asp-action="Index" asp-route-sortBy="lastname_desc">↓</a>
+            </th>
+            <th>First Name</th>
+            <th>Email</th>
+            <th>
+                <a asp-action="Index" asp-route-sortBy="hiredate_asc">Hire Date ↑</a> |
+                <a asp-action="Index" asp-route-sortBy="hiredate_desc">↓</a>
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var emp in Model)
+        {
+            <tr>
+                <td>@emp.LastName</td>
+                <td>@emp.FirstName</td>
+                <td>@emp.Email</td>
+                <td>@emp.HireDate.ToShortDateString()</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@emp.Id">Details</a> |
+                    <a asp-action="Edit" asp-route-id="@emp.Id">Edit</a> |
+                    <a asp-action="Delete" asp-route-id="@emp.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

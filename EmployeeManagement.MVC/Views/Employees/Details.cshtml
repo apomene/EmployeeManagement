@@ -1,0 +1,17 @@
+﻿@model EmployeeManagement.Models.Employee
+
+<h2>@Model.FirstName @Model.LastName</h2>
+<p>Email: @Model.Email</p>
+<p>Hire Date: @Model.HireDate.ToShortDateString()</p>
+
+<h3>Skills</h3>
+<ul>
+    @foreach (var s in Model.EmployeeSkills)
+    {
+        <li>@s.Skill.Name</li>
+    }
+</ul>
+
+<a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
+<a asp-action="Delete" asp-route-id="@Model.Id">Delete</a> |
+<a asp-action="Index">Back to List</a>

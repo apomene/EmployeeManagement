@@ -20,5 +20,6 @@ namespace EmployeeManagement.Models
         public const string NO_EMPLOYEE_ID = "No employee IDs provided.";
         public const string NO_MATCHING_EMPLOYEES = "No matching employees found.";
         public const string INVALID_DEPARTMENT = "Invalid DepartmentId";
+        public const string DEPARTMENTS = "departments";
     }
 }
