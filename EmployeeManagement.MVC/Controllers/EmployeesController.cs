@@ -148,12 +148,12 @@ namespace EmployeeManagement.MVC.Controllers
         // GET: Delete
         public async Task<IActionResult> Delete(int id)
         {
-            // Fetch employee from API
-            var employee = await _http.GetFromJsonAsync<EmployeeViewModel>($"{StringConstants.EMPLOYEES}/{id}");
+            
+            var employee = await _http.GetFromJsonAsync<EmployeeDto>($"{StringConstants.EMPLOYEES}/{id}");
             if (employee == null)
                 return NotFound();
 
-            return View(employee);
+            return View(GetViewModel(employee));
         }
 
         // POST: DeleteConfirmed
@@ -183,7 +183,22 @@ namespace EmployeeManagement.MVC.Controllers
             var response = await _http.PostAsJsonAsync(
                 $"{StringConstants.EMPLOYEES}/{employeeId}/{StringConstants.SKILLS}/{skillId}", new { skillId });
 
-            return RedirectToAction("Details", new { id = employeeId });
+            if (response.IsSuccessStatusCode)
+            {
+                return RedirectToAction(nameof(Details), new { id = employeeId });
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                TempData["SkillError"] = errorMessage;
+            }
+            else
+            {
+                TempData["SkillError"] = StringConstants.UNEXPTECTED_ERROR;
+            }
+               
+            return RedirectToAction(nameof(Details), new { id = employeeId });
         }
 
         [HttpPost]
@@ -213,6 +228,22 @@ namespace EmployeeManagement.MVC.Controllers
                 Skills = skillViewModel,
 
                 AvailableSkills = new SelectList(allSkills, "Id", "Name")
+            };
+            return viewModel;
+        }
+
+        private EmployeeViewModel GetViewModel(EmployeeDto dto)
+        {
+           
+            var viewModel = new EmployeeViewModel
+            {
+                Id = dto.Id,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Email = dto.Email,
+                HireDate = dto.HireDate,
+                DepartmentId = dto.DepartmentId,
+
             };
             return viewModel;
         }

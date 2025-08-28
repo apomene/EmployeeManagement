@@ -10,6 +10,14 @@
             <p><strong>Hire Date:</strong> @Model.HireDate.ToShortDateString()</p>
             <p><strong>Department:</strong> @Model.DepartmentName</p>
 
+            @if (TempData["SkillError"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    @TempData["SkillError"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
             <h4 class="mt-4">Skills</h4>
             @if (Model.Skills.Any())
             {

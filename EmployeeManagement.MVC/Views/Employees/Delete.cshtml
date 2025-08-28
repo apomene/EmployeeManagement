@@ -7,19 +7,7 @@
 
         <div class="mb-3">
             <p><strong>Email:</strong> @Model.Email</p>
-            <p><strong>Hire Date:</strong> @Model.HireDate.ToShortDateString()</p>
-            <p><strong>Department:</strong> @Model.DepartmentName</p>
-            <p>
-                <strong>Skills:</strong>
-                @if (Model.Skills.Any())
-                {
-                    @string.Join(", ", Model.Skills)
-                }
-                else
-                {
-                    <span>No skills assigned</span>
-                }
-            </p>
+            <p><strong>Hire Date:</strong> @Model.HireDate.ToShortDateString()</p>          
         </div>
 
         <form asp-action="DeleteConfirmed" method="post" class="d-flex gap-2">
