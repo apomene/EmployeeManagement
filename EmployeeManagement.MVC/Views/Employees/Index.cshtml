@@ -4,11 +4,13 @@
 
 <div class="row mb-3">
     <div class="col-md-6">
-        <form asp-action="Index" method="get" class="d-flex">
+        <form id="employeeIndexForm"  asp-action="Index" method="get" class="d-flex">
             <input type="text" name="search"
                    value="@ViewData["CurrentSearch"]"
                    class="form-control me-2"
                    placeholder="Search by name..." />
+            <input type="hidden" name="sortBy" id="sortBy" value="@ViewData["CurrentSort"]" />
+
             <button type="submit" class="btn btn-primary">Search</button>
         </form>
     </div>
@@ -21,20 +23,20 @@
     <thead class="table-dark">
         <tr>
             <th>
-                <a asp-action="Index" asp-route-sortBy="lastname_asc" class="link-light text-decoration-none">
+                <a href="#" class="sort-link link-light text-decoration-none" data-sort="lastname_asc">
                     Last Name ↑
                 </a> |
-                <a asp-action="Index" asp-route-sortBy="lastname_desc" class="link-light text-decoration-none">
+                <a href="#" class="sort-link link-light text-decoration-none" data-sort="lastname_desc">
                     ↓
                 </a>
             </th>
             <th>First Name</th>
             <th>Email</th>
             <th>
-                <a asp-action="Index" asp-route-sortBy="hiredate_asc" class="link-light text-decoration-none">
+                <a href="#" class="sort-link link-light text-decoration-none" data-sort="hiredate_asc">
                     Hire Date ↑
                 </a> |
-                <a asp-action="Index" asp-route-sortBy="hiredate_desc" class="link-light text-decoration-none">
+                <a href="#" class="sort-link link-light text-decoration-none" data-sort="hiredate_desc">
                     ↓
                 </a>
             </th>
@@ -58,3 +60,20 @@
         }
     </tbody>
 </table>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const form = document.getElementById("employeeIndexForm");
+          const sortInput = document.getElementById("sortBy");
+
+          document.querySelectorAll(".sort-link").forEach(link => {
+            link.addEventListener("click", e => {
+              e.preventDefault();
+              sortInput.value = link.dataset.sort; // set sort key
+              form.submit(); // submit with current search + new sort
+            });
+          });
+        });
+    </script>
+}

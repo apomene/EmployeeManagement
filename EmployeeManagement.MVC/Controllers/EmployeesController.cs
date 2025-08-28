@@ -22,7 +22,8 @@ namespace EmployeeManagement.MVC.Controllers
         // GET: Employees
         public async Task<IActionResult> Index(string? sortBy, string? search)
         {
-            var employees = await _http.GetFromJsonAsync<List<Employee>>(StringConstants.EMPLOYEES);
+            var employees = await _http.GetFromJsonAsync<List<Employee>>(StringConstants.EMPLOYEES)
+             ?? new List<Employee>();
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -32,16 +33,17 @@ namespace EmployeeManagement.MVC.Controllers
                     .ToList();
             }
 
+            // Sorting
             employees = sortBy switch
             {
-                "lastname_asc" => employees?.OrderBy(e => e.LastName).ToList(),
-                "lastname_desc" => employees?.OrderByDescending(e => e.LastName).ToList(),
-                "hiredate_asc" => employees?.OrderBy(e => e.HireDate).ToList(),
-                "hiredate_desc" => employees?.OrderByDescending(e => e.HireDate).ToList(),
-                _ => employees
+                "lastname_asc" => employees.OrderBy(e => e.LastName).ToList(),
+                "lastname_desc" => employees.OrderByDescending(e => e.LastName).ToList(),
+                "hiredate_asc" => employees.OrderBy(e => e.HireDate).ToList(),
+                "hiredate_desc" => employees.OrderByDescending(e => e.HireDate).ToList(),
+                _ => employees.OrderBy(e => e.LastName).ToList() 
             };
 
-            ViewData["CurrentSearch"] = search; 
+            ViewData["CurrentSearch"] = search;
             ViewData["CurrentSort"] = sortBy;
 
             return View(employees);
