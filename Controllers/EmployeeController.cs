@@ -163,24 +163,29 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> AddSkill(int id, int skillId)
     {
         var employee = await db.Employees
-            .Include(e => e.EmployeeSkills).ThenInclude(es => es.Skill)
+            .Include(e => e.EmployeeSkills)
+            .ThenInclude(es => es.Skill)
             .FirstOrDefaultAsync(e => e.Id == id);
 
-        if (employee == null) return NotFound(StringConstants.NO_MATCHING_EMPLOYEES);
+        if (employee == null)
+            return NotFound(StringConstants.NO_MATCHING_EMPLOYEES);
 
         var skill = await db.Skills.FindAsync(skillId);
+        if (skill == null)
+            return BadRequest(StringConstants.NO_SKILL);
 
-        if (skill == null) return BadRequest(StringConstants.NO_SKILL);
-
-        if (!employee.EmployeeSkills.Any(es => es.Skill.Name == skill.Name))
+        if (employee.EmployeeSkills.Any(es => es.SkillId == skillId))
         {
-            employee.EmployeeSkills.Add(new EmployeeSkill
-            {
-                Employee = employee,
-                SkillId = skillId
-            });
-            await db.SaveChangesAsync();
+            return BadRequest($"{StringConstants.SKILL_IN_USE} '{skill.Name}'.");
         }
+
+        employee.EmployeeSkills.Add(new EmployeeSkill
+        {
+            EmployeeId = employee.Id,
+            SkillId = skillId
+        });
+
+        await db.SaveChangesAsync();
 
         return NoContent();
     }

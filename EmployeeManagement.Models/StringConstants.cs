@@ -12,6 +12,7 @@ namespace EmployeeManagement.Models
         public const string ERROR_UPDATE_SKILL = "Error updating skill";
         public const string ERROR_DELETE_SKILL = "Error deleting skill";
         public const string NO_SKILL = "No Skill with this Id";
+        public const string SKILL_IN_USE = "Employee already has the skill";
 
         // Employees
         public const string EMPLOYEES = "employees";

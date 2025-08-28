@@ -3,6 +3,7 @@ using EmployeeManagement.MVC.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Net.Http.Json;
+using System.Xml.Linq;
 
 namespace EmployeeManagement.MVC.Controllers
 {
@@ -50,22 +51,9 @@ namespace EmployeeManagement.MVC.Controllers
             var allSkills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
             var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");
 
-            var vm = new EmployeeViewModel
-            {
-                Id = dto.Id,
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                Email = dto.Email,
-                HireDate = dto.HireDate,
-                DepartmentId = dto.DepartmentId,
-                Skills = dto.Skills,
+            var viewModel = GetViewModel(dto, allSkills);
 
-                // Fill dropdowns for forms
-                AvailableDepartments = new SelectList(departments, "Id", "Name", dto.DepartmentId),
-                AvailableSkills = new SelectList(allSkills, "Id", "Name")
-            };
-
-            return View(vm);
+            return View(viewModel);
         }
 
 
@@ -76,13 +64,13 @@ namespace EmployeeManagement.MVC.Controllers
             var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");
             var skills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
 
-            var vm = new EmployeeEditViewModel
+            var viewModel = new EmployeeEditViewModel
             {
                 AvailableDepartments = new SelectList(departments, "Id", "Name"),
                 AvailableSkills = new SelectList(skills, "Id", "Name")
             };
 
-            return View(vm);
+            return View(viewModel);
         }
 
         // POST: Create
@@ -115,7 +103,7 @@ namespace EmployeeManagement.MVC.Controllers
             if (!response.IsSuccessStatusCode)
             {
                 ModelState.AddModelError("", StringConstants.ERROR_CREATE_EMPLOYEE);
-                return View(vm);
+                return View(viewModel);
             }
 
             return RedirectToAction(nameof(Index));
@@ -205,6 +193,28 @@ namespace EmployeeManagement.MVC.Controllers
                 $"{StringConstants.EMPLOYEES}/{employeeId}/{StringConstants.SKILLS}/{skillId}");
 
             return RedirectToAction("Details", new { id = employeeId });
+        }
+
+        private EmployeeViewModel GetViewModel(EmployeeDto dto, List<Skill> allSkills)
+        {
+            var skillViewModel = new List<EmployeeSkillViewModel>();
+            skillViewModel = allSkills.Where(s=>dto.Skills.Contains(s.Name))
+                .Select(skill => new EmployeeSkillViewModel { Id = skill.Id, Name = skill.Name })
+                .ToList();
+
+            var viewModel = new EmployeeViewModel
+            {
+                Id = dto.Id,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Email = dto.Email,
+                HireDate = dto.HireDate,
+                DepartmentId = dto.DepartmentId,
+                Skills = skillViewModel,
+
+                AvailableSkills = new SelectList(allSkills, "Id", "Name")
+            };
+            return viewModel;
         }
 
 

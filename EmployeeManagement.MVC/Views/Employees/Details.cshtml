@@ -17,10 +17,10 @@
                     @foreach (var s in Model.Skills)
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            @s
-                            <form asp-action="RemoveSkill" method="post" class="mb-0">
+                            @s.Name
+                            <form asp-action="RemoveSkill" method="post" class="mb-0" onsubmit="return confirm('Are you sure you want to remove this skill?');">
                                 <input type="hidden" name="employeeId" value="@Model.Id" />
-                                <input type="hidden" name="skillId" value="@s" />
+                                <input type="hidden" name="skillId" value="@s.Id" />
                                 <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
                             </form>
                         </li>
@@ -48,9 +48,9 @@
             </div>
 
             <div class="mt-4">
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning me-2">Edit</a>
-                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger me-2">Delete</a>
-                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning me-2 m-5px">Edit</a>
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger me-2 m-5px">Delete</a>
+            <a asp-action="Index" class="btn btn-secondary m-5px">Back to List</a>
             </div>
         </div>
     </div>

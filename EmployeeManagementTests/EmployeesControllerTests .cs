@@ -79,14 +79,29 @@ namespace EmployeeManagement.Tests
             return _dbContext;
         }
 
-        private Employee CreateEmployee(string firstName, string lastName)
-                => new Employee
-                {
-                    FirstName = firstName,
-                    LastName = lastName,
-                    HireDate = DateTime.UtcNow,
-                    Email = $"{firstName.ToLower()}.{lastName.ToLower()}@example.com"
-                };
+        private Employee CreateEmployee(string firstName, string lastName, Department department = null)
+        {
+            return new Employee
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                HireDate = DateTime.UtcNow,
+                Email = $"{firstName.ToLower()}.{lastName.ToLower()}@example.com",
+                Department = department,
+                DepartmentId = department?.Id ?? 1
+            };
+        }
+
+        private Department CrteateDepartment(int Id, string Name)
+        {
+            return new Department
+            {
+                Id = Id,
+                Name = Name,
+                Description = $"{Name} Department"
+            };
+        }
+                
 
         [Test]
         [TestCase("FirstName", "John", "HireDate", "desc", 0, "")]
@@ -195,7 +210,9 @@ namespace EmployeeManagement.Tests
         [Test]
         public async Task GetEmployee_ReturnsSingleEmployee()
         {
-            var emp = CreateEmployee("Charlie", "Day");
+            var department = CrteateDepartment(1, "HR");
+            var emp = CreateEmployee("Charlie", "Day", department);
+            
             _dbContext.Employees.Add(emp);
             await _dbContext.SaveChangesAsync();
 
@@ -287,6 +304,28 @@ namespace EmployeeManagement.Tests
             var badRequest = result as BadRequestObjectResult;
             Assert.That(badRequest!.Value, Is.EqualTo(StringConstants.NO_SKILL));
         }
+
+        [Test]
+        public async Task AddSkill_SkillAlreadyAssigned_ReturnsBadRequest()
+        {
+            var db = await SeedTestData();
+            var dto = new AddSkillDto("Java");
+            db.Skills.Add(new Skill { Id = 1, Name = "Java" });
+            var controller = new EmployeesController(db);
+
+            var employee = await db.Employees
+                .Include(e => e.EmployeeSkills)
+                .FirstAsync();
+            employee.EmployeeSkills.Add(new EmployeeSkill { EmployeeId = employee.Id, SkillId = 1 });
+            await db.SaveChangesAsync();
+
+            var result = await controller.AddSkill(employee.Id, 1);
+
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            var badRequest = result as BadRequestObjectResult;
+            Assert.That(badRequest!.Value.ToString().Contains(StringConstants.SKILL_IN_USE));
+        }
+
 
 
         [Test]
