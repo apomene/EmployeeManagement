@@ -236,6 +236,22 @@ namespace EmployeeManagement.Tests
         }
 
         [Test]
+        public async Task AddSkill_WithNoEmployee_NotFOund()
+        {
+            var emp = CreateEmployee("Mark", "Spencer"); //does not exist in DB
+           
+
+            var dto = new AddSkillDto("Java");
+            _dbContext.Skills.Add(new Skill { Id = 3, Name = "Java" });
+            var result = await _controller.AddSkill(emp.Id, 3);
+
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+
+            var badRequest = result as NotFoundObjectResult;
+            Assert.That(badRequest!.Value, Is.EqualTo(StringConstants.NO_MATCHING_EMPLOYEES));
+        }
+
+        [Test]
         public async Task AddSkill_AssignsSkillToEmployee()
         {
             var emp = CreateEmployee("Mark", "Spencer");

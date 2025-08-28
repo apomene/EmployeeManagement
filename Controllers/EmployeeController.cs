@@ -165,7 +165,7 @@ public class EmployeesController(AppDbContext db) : ControllerBase
             .Include(e => e.EmployeeSkills).ThenInclude(es => es.Skill)
             .FirstOrDefaultAsync(e => e.Id == id);
 
-        if (employee == null) return NotFound();
+        if (employee == null) return NotFound(StringConstants.NO_MATCHING_EMPLOYEES);
 
         var skill = await db.Skills.FindAsync(skillId);
 
