@@ -1,45 +1,79 @@
-﻿@model EmployeeManagement.MVC.Models.EmployeeEditViewModel
+﻿@model EmployeeManagement.MVC.Models.CreateEmployeeViewModel
+
 
 <h2>Create Employee</h2>
 
 <form asp-action="Create" method="post">
-    <div class="form-group mb-2">
-        <label asp-for="FirstName"></label>
+    <div class="mb-3">
+        <label asp-for="FirstName" class="form-label"></label>
         <input asp-for="FirstName" class="form-control" />
         <span asp-validation-for="FirstName" class="text-danger"></span>
     </div>
 
-    <div class="form-group mb-2">
-        <label asp-for="LastName"></label>
+    <div class="mb-3">
+        <label asp-for="LastName" class="form-label"></label>
         <input asp-for="LastName" class="form-control" />
         <span asp-validation-for="LastName" class="text-danger"></span>
     </div>
 
-    <div class="form-group mb-2">
-        <label asp-for="Email"></label>
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
         <input asp-for="Email" class="form-control" />
         <span asp-validation-for="Email" class="text-danger"></span>
     </div>
 
-    <div class="form-group mb-2">
-        <label asp-for="HireDate"></label>
+    <div class="mb-3">
+        <label asp-for="HireDate" class="form-label"></label>
         <input asp-for="HireDate" class="form-control" type="date" />
         <span asp-validation-for="HireDate" class="text-danger"></span>
     </div>
 
-    <div class="form-group mb-2">
-        <label asp-for="DepartmentId">Department</label>
-        <select asp-for="DepartmentId" class="form-control" asp-items="Model.AvailableDepartments">
+    <div class="mb-3">
+        <label asp-for="DepartmentId" class="form-label">Department</label>
+        <select asp-for="DepartmentId" class="form-select"
+                asp-items="Model.Departments">
             <option value="">-- Select Department --</option>
         </select>
         <span asp-validation-for="DepartmentId" class="text-danger"></span>
     </div>
 
-    <div class="form-group mb-2">
-        <label>Skills</label>
-        <select asp-for="SelectedSkillIds" class="form-control" asp-items="Model.AvailableSkills" multiple></select>
+    <div class="mb-3">
+        <label asp-for="SelectedSkillId" class="form-label">Skill</label>
+        <select asp-for="SelectedSkillId" class="form-select"
+                asp-items="Model.AvailableSkills">
+            <option value="">-- Select Skill --</option>
+            <option value="-1">-- Add Non Existing Skill --</option>
+        </select>
+        <span asp-validation-for="SelectedSkillId" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary mt-2">Create</button>
-    <a asp-action="Index" class="btn btn-secondary mt-2">Cancel</a>
+    <div id="newSkillDiv" style="display:none;">
+        <div class="mb-3">
+            <label asp-for="NewSkillName" class="form-label">New Skill Name</label>
+            <input asp-for="NewSkillName" class="form-control" />
+            <span asp-validation-for="NewSkillName" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="NewSkillDescription" class="form-label">New Skill Description</label>
+            <input asp-for="NewSkillDescription" class="form-control" />
+            <span asp-validation-for="NewSkillDescription" class="text-danger"></span>
+        </div>
+    </div>
+   
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
+
+@section Scripts {
+    <script>
+        document.getElementById("SelectedSkillId").addEventListener("change", function () {
+            let newSkillDiv = document.getElementById("newSkillDiv");
+            if (this.value == -1) {
+                newSkillDiv.style.display = "block";
+            } else {
+                newSkillDiv.style.display = "none";
+            }
+        });
+    </script>
+}
