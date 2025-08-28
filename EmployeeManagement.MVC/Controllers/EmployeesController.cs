@@ -210,6 +210,31 @@ namespace EmployeeManagement.MVC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        public async Task<IActionResult> DeleteSelected(List<int> selectedIds)
+        {
+            if (selectedIds == null || !selectedIds.Any())
+                return RedirectToAction(nameof(Index));
+
+            var request = new HttpRequestMessage(HttpMethod.Delete, StringConstants.EMPLOYEES)
+            {
+                Content = JsonContent.Create(selectedIds)
+            };
+
+            var response = await _http.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Failed to delete employees.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            TempData["Success"] = "Employees deleted successfully.";
+            return RedirectToAction(nameof(Index));
+
+        }
+
+
 
         [HttpPost]
         public async Task<IActionResult> AddSkill(int employeeId, int skillId)
