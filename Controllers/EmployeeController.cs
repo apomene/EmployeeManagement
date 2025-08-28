@@ -36,21 +36,22 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<EmployeeDto>> GetEmployee(int id)
     {
-        var e = await db.Employees
-            .Include(emp => emp.EmployeeSkills)
-            .ThenInclude(es => es.Skill)
-            .FirstOrDefaultAsync(emp => emp.Id == id);
+        var employee = await db.Employees
+       .Include(e => e.Department)
+       .Include(e => e.EmployeeSkills)
+           .ThenInclude(es => es.Skill)
+       .FirstOrDefaultAsync(e => e.Id == id);
 
-        if (e == null) return NotFound();
+        if (employee == null) return NotFound();
      
         var dto = new EmployeeDto(
-            e.Id,
-            e.FirstName,
-            e.LastName,
-            e.HireDate,
-            e.Email,
-            e.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
-            e.DepartmentId
+            employee.Id,
+            employee.FirstName,
+            employee.LastName,
+            employee.HireDate,
+            employee.Email,
+            employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
+            employee.DepartmentId
         );
 
         return Ok(dto);

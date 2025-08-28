@@ -1,4 +1,4 @@
-﻿@model EmployeeManagement.Models.Employee
+﻿@model EmployeeManagement.MVC.Models.EmployeeViewModel
 
 <div class="container mt-4">
     <div class="card">
@@ -8,19 +8,19 @@
         <div class="card-body">
             <p><strong>Email:</strong> @Model.Email</p>
             <p><strong>Hire Date:</strong> @Model.HireDate.ToShortDateString()</p>
+            <p><strong>Department:</strong> @Model.DepartmentName</p>
 
             <h4 class="mt-4">Skills</h4>
-
-            @if (Model.EmployeeSkills.Any())
+            @if (Model.Skills.Any())
             {
                 <ul class="list-group mb-3">
-                    @foreach (var s in Model.EmployeeSkills)
+                    @foreach (var s in Model.Skills)
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            @s.Skill.Name
+                            @s
                             <form asp-action="RemoveSkill" method="post" class="mb-0">
                                 <input type="hidden" name="employeeId" value="@Model.Id" />
-                                <input type="hidden" name="skillId" value="@s.SkillId" />
+                                <input type="hidden" name="skillId" value="@s" />
                                 <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
                             </form>
                         </li>
@@ -32,7 +32,7 @@
                 <p class="text-muted">No skills assigned.</p>
             }
 
-            
+            <!-- Add new skill form -->
             <div class="card mt-3">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">Add a Skill</h5>
@@ -40,15 +40,10 @@
                 <div class="card-body">
                     <form asp-action="AddSkill" method="post" class="row g-3">
                         <input type="hidden" name="employeeId" value="@Model.Id" />
-                        <div class="col-md-8">
-                            <select name="skillId" class="form-select" asp-items="ViewBag.Skills">
-                                <option value="">-- Select a Skill --</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <button type="submit" class="btn btn-success w-100">Add Skill</button>
-                        </div>
+                        <select name="skillId" asp-items="Model.AvailableSkills" class="form-control"></select>
+                        <button type="submit" class="btn btn-primary mt-2">Add Skill</button>                  
                     </form>
+                    </div>
                 </div>
             </div>
 

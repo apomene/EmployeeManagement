@@ -1,4 +1,5 @@
 ﻿using EmployeeManagement.Models;
+using EmployeeManagement.MVC.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Net.Http.Json;
@@ -42,15 +43,31 @@ namespace EmployeeManagement.MVC.Controllers
             return View(employees);
         }
 
-        // GET: Employees/Details/5
-        public async Task<IActionResult> Details(int id)
+        // GET: Employees/Details/5   
+           public async Task<IActionResult> Details(int id)
         {
-            var employee = await _http.GetFromJsonAsync<Employee>($"{StringConstants.EMPLOYEES}/{id}");
+            var dto = await _http.GetFromJsonAsync<EmployeeDto>($"{StringConstants.EMPLOYEES}/{id}");
             var allSkills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
+            var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");
 
-            ViewBag.Skills = new SelectList(allSkills, "Id", "Name");
-            return View(employee);
+            var vm = new EmployeeViewModel
+            {
+                Id = dto.Id,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Email = dto.Email,
+                HireDate = dto.HireDate,
+                DepartmentId = dto.DepartmentId,
+                Skills = dto.Skills,
+
+                // Fill dropdowns for forms
+                AvailableDepartments = new SelectList(departments, "Id", "Name", dto.DepartmentId),
+                AvailableSkills = new SelectList(allSkills, "Id", "Name")
+            };
+
+            return View(vm);
         }
+
 
 
         // GET: Employees/Create
