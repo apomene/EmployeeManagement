@@ -46,10 +46,12 @@ namespace EmployeeManagement.MVC.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var employee = await _http.GetFromJsonAsync<Employee>($"{StringConstants.EMPLOYEES}/{id}");
-            if (employee == null) return NotFound();
+            var allSkills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
 
+            ViewBag.Skills = new SelectList(allSkills, "Id", "Name");
             return View(employee);
         }
+
 
         // GET: Employees/Create
         public async Task<IActionResult> Create()
@@ -147,5 +149,25 @@ namespace EmployeeManagement.MVC.Controllers
             ModelState.AddModelError("", StringConstants.ERROR_DELETE_EMPLOYEE);
             return RedirectToAction(nameof(Index));
         }
+     
+        [HttpPost]
+        public async Task<IActionResult> AddSkill(int employeeId, int skillId)
+        {
+            var response = await _http.PostAsJsonAsync(
+                $"{StringConstants.EMPLOYEES}/{employeeId}/{StringConstants.SKILLS}/{skillId}", new { skillId });
+
+            return RedirectToAction("Details", new { id = employeeId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveSkill(int employeeId, int skillId)
+        {
+            var response = await _http.DeleteAsync(
+                $"{StringConstants.EMPLOYEES}/{employeeId}/{StringConstants.SKILLS}/{skillId}");
+
+            return RedirectToAction("Details", new { id = employeeId });
+        }
+
+
     }
 }

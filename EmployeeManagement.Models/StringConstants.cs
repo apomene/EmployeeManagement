@@ -11,6 +11,7 @@ namespace EmployeeManagement.Models
         public const string ERROR_CREATE_SKILL = "Error creating skill";
         public const string ERROR_UPDATE_SKILL = "Error updating skill";
         public const string ERROR_DELETE_SKILL = "Error deleting skill";
+        public const string NO_SKILL = "No Skill with this Id";
 
         // Employees
         public const string EMPLOYEES = "employees";
@@ -21,5 +22,6 @@ namespace EmployeeManagement.Models
         public const string NO_MATCHING_EMPLOYEES = "No matching employees found.";
         public const string INVALID_DEPARTMENT = "Invalid DepartmentId";
         public const string DEPARTMENTS = "departments";
+       
     }
 }

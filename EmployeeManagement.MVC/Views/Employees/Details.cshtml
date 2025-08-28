@@ -10,12 +10,20 @@
             <p><strong>Hire Date:</strong> @Model.HireDate.ToShortDateString()</p>
 
             <h4 class="mt-4">Skills</h4>
+
             @if (Model.EmployeeSkills.Any())
             {
-                <ul class="list-group">
+                <ul class="list-group mb-3">
                     @foreach (var s in Model.EmployeeSkills)
                     {
-                        <li class="list-group-item">@s.Skill.Name</li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @s.Skill.Name
+                            <form asp-action="RemoveSkill" method="post" class="mb-0">
+                                <input type="hidden" name="employeeId" value="@Model.Id" />
+                                <input type="hidden" name="skillId" value="@s.SkillId" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                            </form>
+                        </li>
                     }
                 </ul>
             }
@@ -23,6 +31,26 @@
             {
                 <p class="text-muted">No skills assigned.</p>
             }
+
+            
+            <div class="card mt-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Add a Skill</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AddSkill" method="post" class="row g-3">
+                        <input type="hidden" name="employeeId" value="@Model.Id" />
+                        <div class="col-md-8">
+                            <select name="skillId" class="form-select" asp-items="ViewBag.Skills">
+                                <option value="">-- Select a Skill --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-success w-100">Add Skill</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <div class="mt-4">
                 <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning me-2">Edit</a>

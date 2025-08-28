@@ -243,7 +243,8 @@ namespace EmployeeManagement.Tests
             await _dbContext.SaveChangesAsync();
 
             var dto = new AddSkillDto("Java");
-            var result = await _controller.AddSkill(emp.Id, dto);
+            _dbContext.Skills.Add(new Skill { Id = 3, Name = "Java" });
+            var result = await _controller.AddSkill(emp.Id, 3);
 
             Assert.That(result, Is.InstanceOf<NoContentResult>());
 
@@ -253,6 +254,24 @@ namespace EmployeeManagement.Tests
 
             Assert.That(updated.EmployeeSkills.Any(es => es.Skill.Name == "Java"), Is.True);
         }
+
+        [Test]
+        public async Task AddSkill_WithInvalidId_ReturnBadRequest()
+        {
+            var emp = CreateEmployee("Mark", "Spencer");
+            _dbContext.Employees.Add(emp);
+            await _dbContext.SaveChangesAsync();
+
+            var dto = new AddSkillDto("Java");
+            _dbContext.Skills.Add(new Skill { Id = 3, Name = "Java" });
+            var result = await _controller.AddSkill(emp.Id, 2); //Invalid ID
+
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+
+            var badRequest = result as BadRequestObjectResult;
+            Assert.That(badRequest!.Value, Is.EqualTo(StringConstants.NO_SKILL));
+        }
+
 
         [Test]
         public async Task RemoveSkill_DeletesSkillFromEmployee()

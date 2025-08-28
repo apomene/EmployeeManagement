@@ -158,8 +158,8 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     }
 
 
-    [HttpPost("{id:int}/{StringConstants}")]
-    public async Task<IActionResult> AddSkill(int id, AddSkillDto dto)
+    [HttpPost("{id:int}/skills/{skillId:int}")]
+    public async Task<IActionResult> AddSkill(int id, int skillId)
     {
         var employee = await db.Employees
             .Include(e => e.EmployeeSkills).ThenInclude(es => es.Skill)
@@ -167,15 +167,16 @@ public class EmployeesController(AppDbContext db) : ControllerBase
 
         if (employee == null) return NotFound();
 
-        var skill = await db.Skills.FirstOrDefaultAsync(s => s.Name == dto.SkillName)
-                    ?? new Skill { Name = dto.SkillName };
+        var skill = await db.Skills.FindAsync(skillId);
 
-        if (!employee.EmployeeSkills.Any(es => es.Skill.Name == dto.SkillName))
+        if (skill == null) return BadRequest(StringConstants.NO_SKILL);
+
+        if (!employee.EmployeeSkills.Any(es => es.Skill.Name == skill.Name))
         {
             employee.EmployeeSkills.Add(new EmployeeSkill
             {
                 Employee = employee,
-                Skill = skill
+                SkillId = skillId
             });
             await db.SaveChangesAsync();
         }
