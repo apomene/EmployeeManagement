@@ -70,46 +70,57 @@ namespace EmployeeManagement.MVC.Controllers
 
 
 
-        // GET: Employees/Create
+        // GET: Create
         public async Task<IActionResult> Create()
         {
             var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");
-            ViewData["Departments"] = new SelectList(departments, "Id", "Name");
-            return View();
+            var skills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
+
+            var vm = new EmployeeEditViewModel
+            {
+                AvailableDepartments = new SelectList(departments, "Id", "Name"),
+                AvailableSkills = new SelectList(skills, "Id", "Name")
+            };
+
+            return View(vm);
         }
 
-        // POST: Employees/Create
+        // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Employee employee)
+        public async Task<IActionResult> Create(EmployeeEditViewModel vm)
         {
+            var skills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
             if (!ModelState.IsValid)
             {
-                // Log or inspect which fields are invalid
-                foreach (var entry in ModelState)
-                {
-                    var key = entry.Key;
-                    var errors = entry.Value.Errors;
-                    foreach (var error in errors)
-                    {
-                        Console.WriteLine($"Property '{key}' is invalid: {error.ErrorMessage}");
-                    }
-                }
-
-                var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");
-                ViewData["Departments"] = new SelectList(departments, "Id", "Name", employee.DepartmentId);
-                return View(employee);
+                // Reload dropdowns
+                var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");               
+                vm.AvailableDepartments = new SelectList(departments, "Id", "Name", vm.DepartmentId);
+                vm.AvailableSkills = new SelectList(skills, "Id", "Name", vm.SelectedSkillIds);
+                return View(vm);
             }
 
-            var response = await _http.PostAsJsonAsync(StringConstants.EMPLOYEES, employee);
-            if (response.IsSuccessStatusCode)
-                return RedirectToAction(nameof(Index));
+            // Map ViewModel to DTO or entity
+            var dto = new EmployeeDto(
+                vm.Id,
+                vm.FirstName,
+                vm.LastName,
+                vm.HireDate,
+                vm.Email,
+                vm.SelectedSkillIds.Select(id => skills.First(s => s.Id == id).Name).ToList(),
+                vm.DepartmentId
+            );
 
-            ModelState.AddModelError("", StringConstants.ERROR_CREATE_EMPLOYEE);
-            return View(employee);
+            var response = await _http.PostAsJsonAsync(StringConstants.EMPLOYEES, dto);
+            if (!response.IsSuccessStatusCode)
+            {
+                ModelState.AddModelError("", StringConstants.ERROR_CREATE_EMPLOYEE);
+                return View(vm);
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
-     
 
         // GET: Employees/Edit/5
         public async Task<IActionResult> Edit(int id)
