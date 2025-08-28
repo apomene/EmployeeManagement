@@ -1,10 +1,31 @@
-﻿@model EmployeeManagement.Models.Employee
+﻿@model EmployeeManagement.MVC.Models.EmployeeViewModel
 
-<h2>Delete Employee</h2>
-<p>Are you sure you want to delete @Model.FirstName @Model.LastName?</p>
+<div class="container mt-4">
+    <div class="card p-4 shadow-sm">
+        <h2 class="mb-3 text-danger">Delete Employee</h2>
+        <p>Are you sure you want to delete <strong>@Model.FirstName @Model.LastName</strong>?</p>
 
-<form asp-action="DeleteConfirmed" method="post">
-    <input type="hidden" asp-for="Id" />
-    <button type="submit" class="m-5px">Delete</button>
-    <a asp-action="Index" class="m-5px">Cancel</a>
-</form>
+        <div class="mb-3">
+            <p><strong>Email:</strong> @Model.Email</p>
+            <p><strong>Hire Date:</strong> @Model.HireDate.ToShortDateString()</p>
+            <p><strong>Department:</strong> @Model.DepartmentName</p>
+            <p>
+                <strong>Skills:</strong>
+                @if (Model.Skills.Any())
+                {
+                    @string.Join(", ", Model.Skills)
+                }
+                else
+                {
+                    <span>No skills assigned</span>
+                }
+            </p>
+        </div>
+
+        <form asp-action="DeleteConfirmed" method="post" class="d-flex gap-2">
+            <input type="hidden" asp-for="Id" />
+            <button type="submit" class="btn btn-danger">Delete</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>

@@ -88,27 +88,27 @@ namespace EmployeeManagement.MVC.Controllers
         // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(EmployeeEditViewModel vm)
+        public async Task<IActionResult> Create(EmployeeEditViewModel viewModel)
         {
             var skills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
             if (!ModelState.IsValid)
             {
                 // Reload dropdowns
-                var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");               
-                vm.AvailableDepartments = new SelectList(departments, "Id", "Name", vm.DepartmentId);
-                vm.AvailableSkills = new SelectList(skills, "Id", "Name", vm.SelectedSkillIds);
-                return View(vm);
+                var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");
+                viewModel.AvailableDepartments = new SelectList(departments, "Id", "Name", viewModel.DepartmentId);
+                viewModel.AvailableSkills = new SelectList(skills, "Id", "Name", viewModel.SelectedSkillIds);
+                return View(viewModel);
             }
 
             // Map ViewModel to DTO or entity
             var dto = new EmployeeDto(
-                vm.Id,
-                vm.FirstName,
-                vm.LastName,
-                vm.HireDate,
-                vm.Email,
-                vm.SelectedSkillIds.Select(id => skills.First(s => s.Id == id).Name).ToList(),
-                vm.DepartmentId
+                viewModel.Id,
+                viewModel.FirstName,
+                viewModel.LastName,
+                viewModel.HireDate,
+                viewModel.Email,
+                viewModel.SelectedSkillIds.Select(id => skills.First(s => s.Id == id).Name).ToList(),
+                viewModel.DepartmentId
             );
 
             var response = await _http.PostAsJsonAsync(StringConstants.EMPLOYEES, dto);
@@ -157,27 +157,38 @@ namespace EmployeeManagement.MVC.Controllers
             return View(employee);
         }
 
-        // GET: Employees/Delete/5
+        // GET: Delete
         public async Task<IActionResult> Delete(int id)
         {
-            var employee = await _http.GetFromJsonAsync<Employee>($"{StringConstants.EMPLOYEES}/{id}");
-            if (employee == null) return NotFound();
+            // Fetch employee from API
+            var employee = await _http.GetFromJsonAsync<EmployeeViewModel>($"{StringConstants.EMPLOYEES}/{id}");
+            if (employee == null)
+                return NotFound();
+
             return View(employee);
         }
 
-        // POST: Employees/Delete/5
-        [HttpPost, ActionName("Delete")]
+        // POST: DeleteConfirmed
+        [HttpPost, ActionName("DeleteConfirmed")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(EmployeeViewModel viewModel)
         {
-            var response = await _http.DeleteAsync($"{StringConstants.EMPLOYEES}/{id}");
-            if (response.IsSuccessStatusCode)
-                return RedirectToAction(nameof(Index));
+            if (viewModel == null || viewModel.Id == 0)
+                return BadRequest(StringConstants.INVALID_EMPLOYEE);
 
-            ModelState.AddModelError("", StringConstants.ERROR_DELETE_EMPLOYEE);
+            var response = await _http.DeleteAsync($"{StringConstants.EMPLOYEES}/{viewModel.Id}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                // Optional: you could add a TempData message to show the error in the UI
+                ModelState.AddModelError("", StringConstants.NO_MATCHING_EMPLOYEES);
+                return View(viewModel); // show the Delete page again
+            }
+
             return RedirectToAction(nameof(Index));
         }
-     
+
+
         [HttpPost]
         public async Task<IActionResult> AddSkill(int employeeId, int skillId)
         {
