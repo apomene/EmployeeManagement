@@ -2,19 +2,8 @@
 
 <h2>Create Skill</h2>
 
-<form asp-action="Create" method="post">
-    <div class="form-group m-5px">
-        <label asp-for="Name"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
-    </div>
+@{
+    ViewData["FormAction"] = "Create";
+}
 
-    <div class="form-group m-5px">
-        <label asp-for="Description"></label>
-        <textarea asp-for="Description" class="form-control"></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
-    </div>
-
-    <button type="submit" class="btn btn-primary m-5px">Save</button>
-    <a class="btn btn-secondary m-5px" asp-action="Index">Cancel</a>
-</form>
+<partial name="_SkillForm" model="Model" />
