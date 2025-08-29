@@ -93,7 +93,26 @@ namespace EmployeeManagement.Controllers
 
             TempData["ErrorMessage"] = StringConstants.ERROR_DELETE_SKILL;
             return RedirectToAction(nameof(Delete), new { id });
+        }
 
+        [HttpGet]
+        public async Task<IActionResult> ExportSkills()
+        {
+            // Call API
+            var response = await _http.GetAsync("/export");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Failed to export skills.";
+                return RedirectToAction("Index");
+            }
+
+            // Read file bytes and content disposition
+            var contentBytes = await response.Content.ReadAsByteArrayAsync();
+            var contentType = response.Content.Headers.ContentType?.ToString() ?? "text/csv";
+            var fileName = $"skills_{DateTime.UtcNow:yyyyMMddHHmmss}.csv";
+
+            return File(contentBytes, contentType, fileName);
         }
     }
 }

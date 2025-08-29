@@ -112,21 +112,24 @@ public class SkillsController(AppDbContext db) : ControllerBase
         var csvBuilder = new StringBuilder();
 
         var properties = typeof(SkillDto).GetProperties();
-           
-        csvBuilder.AppendLine(string.Join(",", properties.Select(p => p.Name)));
 
-        
+        csvBuilder.AppendLine(string.Join(",", properties.Select(p => $"\"{p.Name}\"")));
+
+
         foreach (var skill in skills)
         {
             var values = properties.Select(p =>
             {
-                var value = p.GetValue(skill, null);
-                return value is DateTime dt ? dt.ToString("o") : value?.ToString();
+                var val = p.GetValue(skill)?.ToString() ?? "";
+                // Escape any internal quotes
+                val = val.Replace("\"", "\"\"");
+                return $"\"{val}\"";
             });
+
             csvBuilder.AppendLine(string.Join(",", values));
         }
 
-        var fileName = $"skills_export_{DateTime.UtcNow:yyyyMMddHHmmss}.csv";
+        var fileName = $"skills_{DateTime.UtcNow:yyyyMMddHHmmss}.csv";
         var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
 
         return File(csvBytes, "text/csv", fileName);
