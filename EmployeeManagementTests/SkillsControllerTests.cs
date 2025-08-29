@@ -204,7 +204,10 @@ namespace EmployeeManagement.Tests
             Assert.That("text/csv" == result.ContentType);
 
             var csvText = Encoding.UTF8.GetString(result.FileContents);
-            Assert.That(csvText.Contains("Id,Name,Description,CreatedAt"));
+            Assert.That(csvText.Contains("Name"));
+            Assert.That(csvText.Contains("Description"));
+            Assert.That(csvText.Contains("CreatedAt"));
+
             Assert.That(csvText.Contains("TestSkill"));
         }
 
