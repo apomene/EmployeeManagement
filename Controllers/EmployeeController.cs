@@ -32,15 +32,19 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return Ok(employees);
     }
 
-
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<EmployeeDto>> GetEmployee(int id)
+    private async Task<Employee?> GetEmployeeById(int id)
     {
-        var employee = await db.Employees
+        return  await db.Employees
        .Include(e => e.Department)
        .Include(e => e.EmployeeSkills)
            .ThenInclude(es => es.Skill)
        .FirstOrDefaultAsync(e => e.Id == id);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<EmployeeDto>> GetEmployee(int id)
+    {
+        var employee = await GetEmployeeById(id);
 
         if (employee == null) return NotFound();
      
@@ -116,13 +120,37 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateEmployee(int id, UpdateEmployeeDto dto)
     {
-        var employee = await db.Employees.FindAsync(id);
+        var employee = await GetEmployeeById(id);
         if (employee == null) return NotFound();
+
+        var department = await db.Departments.FindAsync(dto.DepartmentId);
+        if (department == null)
+            return BadRequest(StringConstants.INVALID_DEPARTMENT);
 
         employee.FirstName = dto.FirstName;
         employee.LastName = dto.LastName;
         employee.HireDate = dto.HireDate;
         employee.Email = dto.Email;
+        employee.DepartmentId = dto.DepartmentId;
+        if (dto.Skills != null && dto.Skills.Any())
+        {
+            foreach (var skillName in dto.Skills)
+            {
+                var skill = await db.Skills.FirstOrDefaultAsync(s => s.Name == skillName)
+                            ?? new Skill { Name = skillName };
+                var existingSkill = employee.EmployeeSkills
+                    .FirstOrDefault(es => es.Skill.Name == skillName);
+                if (existingSkill == null)
+                {
+                    employee.EmployeeSkills.Add(new EmployeeSkill
+                    {
+                        Employee = employee,
+                        Skill = skill
+                    });
+                }
+               
+            }
+        }
 
         await db.SaveChangesAsync();
         return NoContent();

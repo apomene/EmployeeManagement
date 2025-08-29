@@ -121,7 +121,6 @@ namespace EmployeeManagement.MVC.Controllers
                 }
             }
 
-            // Map ViewModel to DTO or entity
             var dto = new EmployeeDto(
                 viewModel.Id,
                 viewModel.FirstName,
@@ -132,10 +131,25 @@ namespace EmployeeManagement.MVC.Controllers
                 viewModel.DepartmentId
             );
 
-            var response = await _http.PostAsJsonAsync(StringConstants.EMPLOYEES, dto);
+            HttpResponseMessage response;
+
+            if (viewModel.Id == 0)
+            {
+                // New employee → POST
+                response = await _http.PostAsJsonAsync(StringConstants.EMPLOYEES, dto);
+            }
+            else
+            {
+                // Existing employee → PUT
+                response = await _http.PutAsJsonAsync($"{StringConstants.EMPLOYEES}/{viewModel.Id}", dto);
+            }
+
             if (!response.IsSuccessStatusCode)
             {
-                ModelState.AddModelError("", StringConstants.ERROR_CREATE_EMPLOYEE);
+                ModelState.AddModelError("", viewModel.Id == 0
+                    ? StringConstants.ERROR_CREATE_EMPLOYEE
+                    : StringConstants.ERROR_UPDATE_EMPLOYEE);
+
                 return View(viewModel);
             }
 
@@ -143,6 +157,79 @@ namespace EmployeeManagement.MVC.Controllers
         }
 
 
+        // POST: Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(CreateEmployeeViewModel viewModel)
+        {
+            var skills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
+            if (!ModelState.IsValid)
+            {
+                // Reload dropdowns
+                viewModel.Departments = new SelectList(_departments, "Id", "Name", viewModel.DepartmentId);
+                viewModel.AvailableSkills = new SelectList(skills, "Id", "Name", viewModel.SelectedSkillId);
+                return View(viewModel);
+            }
+
+            List<string> skillIsToAssign = new List<string>();
+
+            foreach (var skillId in viewModel.SelectedSkillIds)
+            {
+
+                var selectedSkill = skills.FirstOrDefault(s => s.Id == skillId);
+                if (selectedSkill != null)
+                {
+                    skillIsToAssign.Add(selectedSkill.Name);
+                }
+                else if (!string.IsNullOrWhiteSpace(viewModel.NewSkillName))
+                {
+                    // Create the new skill via API
+                    var skillResponse = await _http.PostAsJsonAsync(StringConstants.SKILLS, new CreateSkillDto(viewModel.NewSkillName, viewModel.NewSkillDescription));
+                    if (!skillResponse.IsSuccessStatusCode)
+                    {
+                        TempData["SkillError"] = "Could not create new skill.";
+                        return RedirectToAction(nameof(Create));
+                    }
+
+                    var newSkill = await skillResponse.Content.ReadFromJsonAsync<Skill>();
+                    skillIsToAssign.Add(newSkill.Name);
+                }
+            }
+
+            var dto = new EmployeeDto(
+                viewModel.Id,
+                viewModel.FirstName,
+                viewModel.LastName,
+                viewModel.HireDate,
+                viewModel.Email,
+                skillIsToAssign,
+                viewModel.DepartmentId
+            );
+
+            HttpResponseMessage response;
+
+            if (viewModel.Id == 0)
+            {
+                // New employee → POST
+                response = await _http.PostAsJsonAsync(StringConstants.EMPLOYEES, dto);
+            }
+            else
+            {
+                // Existing employee → PUT
+                response = await _http.PutAsJsonAsync($"{StringConstants.EMPLOYEES}/{viewModel.Id}", dto);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ModelState.AddModelError("", viewModel.Id == 0
+                    ? StringConstants.ERROR_CREATE_EMPLOYEE
+                    : StringConstants.ERROR_UPDATE_EMPLOYEE);
+
+                return View(viewModel);
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
         // GET: Employees/Edit/5
         public async Task<IActionResult> Edit(int id)
         {

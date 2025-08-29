@@ -25,7 +25,9 @@ namespace EmployeeManagement.Models
         [Required] string FirstName,
         [Required] string LastName,
         string Email,
-        DateTime HireDate);
+        DateTime HireDate,
+         List<string>? Skills,
+        int DepartmentId);
 
     public record AddSkillDto(
         [Required] string SkillName);

@@ -34,6 +34,9 @@ namespace EmployeeManagement.Tests
 
         private async Task<AppDbContext> SeedTestData()
         {
+            var department = new Department { Id = 1, Name = "IT" };
+            var skill1 = new Skill { Id = 23, Name = "Angular" };
+            var skill2 = new Skill { Id = 32, Name = "MongoDB" };
 
             _dbContext.Employees.AddRange(
                 new Employee
@@ -71,10 +74,24 @@ namespace EmployeeManagement.Tests
                     {
                     new EmployeeSkill { Skill = new Skill { Name = "Java" } }
                     }
-                }
+                },
+                new Employee
+                {
+                    Id = 4,
+                    FirstName = "Apo",
+                    LastName = "Mene",
+                    Email = "apo@example.com",
+                    HireDate = DateTime.UtcNow,
+                    Department = department,
+                    DepartmentId = department.Id,
+                    EmployeeSkills = new List<EmployeeSkill> { new EmployeeSkill { EmployeeId = 4, Skill = skill1 } }
+                }                             
             );
+          
+            
+            _dbContext.Departments.Add(department);
+            _dbContext.Skills.AddRange(skill1, skill2);
 
-           
             await _dbContext.SaveChangesAsync();
             return _dbContext;
         }
@@ -156,7 +173,7 @@ namespace EmployeeManagement.Tests
             var employees = (result.Result as OkObjectResult)?.Value as IEnumerable<EmployeeDto>;
 
             var list = employees.ToList();
-            Assert.That(list!.Count(), Is.EqualTo(3));
+            Assert.That(list!.Count(), Is.EqualTo(4));
         }
 
         [Test]
@@ -224,13 +241,28 @@ namespace EmployeeManagement.Tests
         }
 
         [Test]
-        public async Task UpdateEmployee_ChangesData()
+        public async Task UpdateEmployee_InvalidDepartment_ReturnsBadRequest()
         {
-            var emp = CreateEmployee("Eve", "Jones");
+            var department = CrteateDepartment(1, "HR");
+            var emp = CreateEmployee("Eve", "Jones", department);
             _dbContext.Employees.Add(emp);
             await _dbContext.SaveChangesAsync();
 
-            var dto = new UpdateEmployeeDto("EveUpdated", "JonesUpdated", emp.Email, DateTime.UtcNow);
+            var dto = new UpdateEmployeeDto("EveUpdated", "JonesUpdated", emp.Email, DateTime.UtcNow, new List<string>(), 999);
+            var result = await _controller.UpdateEmployee(emp.Id, dto);
+            Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
+            
+        }
+
+        [Test]
+        public async Task UpdateEmployee_ChangesData()
+        {
+            var department = CrteateDepartment(1, "HR");
+            var emp = CreateEmployee("Eve", "Jones", department);
+            _dbContext.Employees.Add(emp);
+            await _dbContext.SaveChangesAsync();
+
+            var dto = new UpdateEmployeeDto("EveUpdated", "JonesUpdated", emp.Email, DateTime.UtcNow,new List<string>(),department.Id);
             var result = await _controller.UpdateEmployee(emp.Id, dto);
 
             Assert.That(result, Is.InstanceOf<NoContentResult>());
@@ -238,6 +270,27 @@ namespace EmployeeManagement.Tests
             var updated = await _dbContext.Employees.FindAsync(emp.Id);
             Assert.That(updated!.FirstName, Is.EqualTo("EveUpdated"));
         }
+
+        [Test]
+        public async Task UpdateEmployee_WithExistingSkill_DoesNotDuplicate()
+        {
+            // Arrange
+            var db = await SeedTestData();
+            var controller = new EmployeesController(db);
+            var dto = new UpdateEmployeeDto("John", "Doe", "john@example.com", DateTime.UtcNow, new List<string> { "Angular", "MongoDB" },1);
+
+            var result = await controller.UpdateEmployee(4, dto);
+
+            var employee = await db.Employees
+                .Include(e => e.EmployeeSkills)
+                .ThenInclude(es => es.Skill)
+                .FirstAsync(e => e.Id == 4);
+
+            Assert.That(employee.EmployeeSkills.Count, Is.EqualTo(2));
+            Assert.That(employee.EmployeeSkills.Any(es => es.Skill.Name == "Angular"), Is.True);
+            Assert.That(employee.EmployeeSkills.Any(es => es.Skill.Name == "MongoDB"), Is.True);
+        }
+
 
         [Test]
         public async Task DeleteEmployee_RemovesEmployee()
@@ -363,7 +416,7 @@ namespace EmployeeManagement.Tests
             Assert.That(result, Is.TypeOf<NoContentResult>());
 
             var remaining = await db.Employees.ToListAsync();
-            Assert.That(remaining.Count, Is.EqualTo(1));
+            Assert.That(remaining.Count, Is.EqualTo(2));
             Assert.That(remaining[0].Id, Is.EqualTo(3));
         }
 
@@ -396,7 +449,7 @@ namespace EmployeeManagement.Tests
             Assert.That(notFound!.Value, Is.EqualTo(StringConstants.NO_MATCHING_EMPLOYEES));
 
             var remaining = await db.Employees.ToListAsync();
-            Assert.That(remaining.Count, Is.EqualTo(3));
+            Assert.That(remaining.Count, Is.EqualTo(4));
         }
     }
 

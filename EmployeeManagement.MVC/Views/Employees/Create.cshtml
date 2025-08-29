@@ -1,76 +1,73 @@
 ﻿@model EmployeeManagement.MVC.Models.CreateEmployeeViewModel
-
 @{
     bool isEdit = ViewData["IsEdit"] != null && (bool)ViewData["IsEdit"];
     string title = isEdit ? "Update Employee" : "Create Employee";
     string buttonText = isEdit ? "Update" : "Create";
-    string skillPlaceholder = "-- Add Non Existing Skill --";
+    string skillPlaceholder =  "-- Add Non Existing Skill --";
 }
-
 
 <h2>@title</h2>
 
-<form asp-action="@(isEdit ? "Edit" : "Create")" method="post">
-    @if (isEdit)
-    {
-        <input type="hidden" asp-for="Id" />
-    }
-
-    <div class="mb-3">
-        <label asp-for="FirstName" class="form-label"></label>
-        <input asp-for="FirstName" class="form-control" />
-        <span asp-validation-for="FirstName" class="text-danger"></span>
+<form asp-action="@(ViewData["IsEdit"] != null ? "Edit" : "Create")" method="post">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label asp-for="FirstName" class="form-label"></label>
+            <input asp-for="FirstName" class="form-control" />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="LastName" class="form-label"></label>
+            <input asp-for="LastName" class="form-control" />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label asp-for="LastName" class="form-label"></label>
-        <input asp-for="LastName" class="form-control" />
-        <span asp-validation-for="LastName" class="text-danger"></span>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="HireDate" class="form-label"></label>
+            <input asp-for="HireDate" class="form-control" type="date" />
+            <span asp-validation-for="HireDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="DepartmentId" class="form-label">Department</label>
+            <select asp-for="DepartmentId" class="form-select"
+                    asp-items="Model.Departments">
+                <option value="">-- Select Department --</option>
+            </select>
+            <span asp-validation-for="DepartmentId" class="text-danger"></span>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="HireDate" class="form-label"></label>
-        <input asp-for="HireDate" class="form-control" type="date" />
-        <span asp-validation-for="HireDate" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="DepartmentId" class="form-label">Department</label>
-        <select asp-for="DepartmentId" class="form-select"
-                asp-items="Model.Departments">
-            <option value="">-- Select Department --</option>
-        </select>
-        <span asp-validation-for="DepartmentId" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="SelectedSkillIds" class="form-label">Skills</label>
-        <select asp-for="SelectedSkillIds" asp-items="Model.AvailableSkills"
-                multiple class="form-control" id="SelectedSkillIds">
-            <option value="-1">@skillPlaceholder</option>
-        </select>
-        <span asp-validation-for="SelectedSkillIds" class="text-danger"></span>
+    <div class="row mb-3">
+        <div class="col-12">
+            <label asp-for="SelectedSkillIds" class="form-label">Skills</label>
+            <select asp-for="SelectedSkillIds" asp-items="Model.AvailableSkills"
+                    multiple class="form-control" id="SelectedSkillIds" style="height:200px;">
+                <option value="-1">@skillPlaceholder</option>
+            </select>
+            <span asp-validation-for="SelectedSkillIds" class="text-danger"></span>
+        </div>
     </div>
 
     <div id="newSkillDiv" style="display:none;">
-        <div class="mb-3">
-            <label asp-for="NewSkillName" class="form-label">New Skill Name</label>
-            <input asp-for="NewSkillName" class="form-control" />
-            <span asp-validation-for="NewSkillName" class="text-danger"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="NewSkillDescription" class="form-label">New Skill Description</label>
-            <input asp-for="NewSkillDescription" class="form-control" />
-            <span asp-validation-for="NewSkillDescription" class="text-danger"></span>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="NewSkillName" class="form-label">New Skill Name</label>
+                <input asp-for="NewSkillName" class="form-control" />
+                <span asp-validation-for="NewSkillName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="NewSkillDescription" class="form-label">New Skill Description</label>
+                <input asp-for="NewSkillDescription" class="form-control" />
+                <span asp-validation-for="NewSkillDescription" class="text-danger"></span>
+            </div>
         </div>
     </div>
-   
 
     <button type="submit" class="btn btn-primary">@buttonText</button>
     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
@@ -80,7 +77,7 @@
     <script>
         document.getElementById("SelectedSkillIds").addEventListener("change", function () {
             let newSkillDiv = document.getElementById("newSkillDiv");
-         let selectedValues = Array.from(this.selectedOptions).map(opt => opt.value);
+            let selectedValues = Array.from(this.selectedOptions).map(opt => opt.value);
 
             if (selectedValues.includes("-1")) {
                 newSkillDiv.style.display = "block";
