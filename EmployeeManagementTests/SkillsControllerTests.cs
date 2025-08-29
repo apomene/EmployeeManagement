@@ -167,5 +167,28 @@ namespace EmployeeManagement.Tests
 
             Assert.That(result, Is.TypeOf<NotFoundResult>());
         }
+
+        [Test]
+        public async Task DeleteSkill_ShouldReturnBadRequest_WhenSkillAssignedToEmployee()
+        {
+            // Arrange
+            var skill = new Skill { Id = 2, Name = "C#", Description = "Programming" };
+            var employee = new Employee { Id = 3, FirstName = "John", LastName = "Doe",Email="doe@hotmail.com" };
+            var employeeSkill = new EmployeeSkill { EmployeeId = 1, SkillId = 2, Employee = employee, Skill = skill };
+
+            _dbContext.Skills.Add(skill);
+            _dbContext.Employees.Add(employee);
+            _dbContext.EmployeeSkills.Add(employeeSkill);
+            await _dbContext.SaveChangesAsync();
+
+            // Act
+            var result = await _controller.DeleteSkill(skill.Id);
+
+            // Assert
+            Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
+            
+            var badRequest = result as BadRequestObjectResult;
+            Assert.That("Cannot delete skill because it is assigned to one or more employees." == badRequest.Value);
+        }
     }
 }

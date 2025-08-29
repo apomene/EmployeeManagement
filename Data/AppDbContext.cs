@@ -30,9 +30,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(es => es.EmployeeId);
 
         modelBuilder.Entity<EmployeeSkill>()
-            .HasOne(es => es.Skill)
-            .WithMany(s => s.EmployeeSkills)
-            .HasForeignKey(es => es.SkillId);
+        .HasOne(es => es.Skill)
+        .WithMany(s => s.EmployeeSkills)
+        .HasForeignKey(es => es.SkillId)
+        .OnDelete(DeleteBehavior.Restrict); 
 
         modelBuilder.Entity<Skill>().Property(s => s.CreatedAt)
                     .HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
