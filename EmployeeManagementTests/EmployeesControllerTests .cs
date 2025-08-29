@@ -2,6 +2,7 @@
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
 using EmployeeManagement.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -87,13 +88,39 @@ namespace EmployeeManagement.Tests
                     EmployeeSkills = new List<EmployeeSkill> { new EmployeeSkill { EmployeeId = 4, Skill = skill1 } }
                 }                             
             );
-          
-            
+
+           
             _dbContext.Departments.Add(department);
             _dbContext.Skills.AddRange(skill1, skill2);
 
             await _dbContext.SaveChangesAsync();
             return _dbContext;
+        }
+
+        private void SeedEmployeeSkills()
+        {
+            
+            var skill1 = new Skill { Id = 23, Name = "Angular" };
+            var skill2 = new Skill { Id = 32, Name = "MongoDB" };
+            var employee = new Employee 
+              { Id = 17, 
+                FirstName = "Bill",
+                LastName = "Mene",
+                Email = "apo@example.com",
+                HireDate = DateTime.UtcNow,
+            };
+            _dbContext.Employees.Add(employee);
+
+
+            _dbContext.Skills.AddRange(skill1, skill2);
+
+            var empSkills = new List<EmployeeSkill>
+        {
+            new EmployeeSkill { EmployeeId = 17, SkillId = 23, AssignedAt = System.DateTime.UtcNow },
+            new EmployeeSkill { EmployeeId = 17, SkillId = 32, AssignedAt = System.DateTime.UtcNow }
+        };
+            _dbContext.EmployeeSkills.AddRange(empSkills);
+            _dbContext.SaveChanges();
         }
 
         private Employee CreateEmployee(string firstName, string lastName, Department department = null)
@@ -379,8 +406,6 @@ namespace EmployeeManagement.Tests
             Assert.That(badRequest!.Value.ToString().Contains(StringConstants.SKILL_IN_USE));
         }
 
-
-
         [Test]
         public async Task RemoveSkill_DeletesSkillFromEmployee()
         {
@@ -450,6 +475,41 @@ namespace EmployeeManagement.Tests
 
             var remaining = await db.Employees.ToListAsync();
             Assert.That(remaining.Count, Is.EqualTo(4));
+        }
+
+        [Test]
+        public async Task GetEmployeeSkills_ReturnsOk_WithEmployeeSkills()
+        {
+            SeedEmployeeSkills();
+            var result = await _controller.GetEmployeeSkills(17);
+
+            
+            Assert.That(result.Result, Is.TypeOf<OkObjectResult>());
+
+            var okResult = result.Result as OkObjectResult;
+            var skills = okResult.Value as List<EmployeeSkill>;
+
+            Assert.That(skills, Is.Not.Null);
+            Assert.That(skills.Count, Is.EqualTo(2));
+
+            Assert.That(skills.Any(s => s.SkillId == 23));
+            Assert.That(skills.Any(s => s.SkillId == 32));
+        }
+
+        [Test]
+        public async Task GetEmployeeSkills_ReturnsOk_WithEmptyList_WhenNoSkills()
+        {
+            // Act
+            var result = await _controller.GetEmployeeSkills(999); // Non-existing employee
+
+            // Assert
+            Assert.That(result.Result, Is.TypeOf<OkObjectResult>());
+
+            var okResult = result.Result as OkObjectResult;
+            var skills = okResult.Value as List<EmployeeSkill>;
+
+            Assert.That(skills, Is.Not.Null);
+            Assert.That(skills.Count, Is.EqualTo(0));
         }
     }
 

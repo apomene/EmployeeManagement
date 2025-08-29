@@ -7,5 +7,8 @@
 
         public int SkillId { get; set; }
         public Skill Skill { get; set; }
+
+        public DateTime AssignedAt { get; set; } = DateTime.UtcNow; 
+
     }
 }

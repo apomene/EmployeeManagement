@@ -69,6 +69,17 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return Ok(departments);
     }
 
+    [HttpGet("{id:int}/skills")]
+    public async Task<ActionResult<Department>> GetEmployeeSkills(int id)
+    {
+        var employeeSkills = await db.EmployeeSkills.
+            Where(emp=>emp.EmployeeId == id).
+            AsNoTracking().
+            ToListAsync();
+
+        return Ok(employeeSkills);
+    }
+
     [HttpPost]
     public async Task<ActionResult<EmployeeDto>> CreateEmployee(CreateEmployeeDto dto)
     {

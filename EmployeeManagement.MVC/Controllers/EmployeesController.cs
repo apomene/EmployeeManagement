@@ -63,8 +63,6 @@ namespace EmployeeManagement.MVC.Controllers
             return View(viewModel);
         }
 
-
-
         // GET: Create
         public async Task<IActionResult> Create()
         {
