@@ -13,6 +13,9 @@
             <input type="hidden" name="sortBy" id="sortBy" value="@ViewData["CurrentSort"]" />
         </form>
     </div>
+    <div class="col-md-6 text-end">
+        <a asp-action="Create" class="btn btn-success">+ Create New Employee</a>
+    </div>
 </div>
 
 
@@ -68,45 +71,3 @@
     <button type="submit" class="btn btn-danger mt-2" onclick="return confirm('Are you sure you want to delete selected Employees?');">Delete Selected</button>
 </form>
 
-
-@section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-          const form = document.getElementById("employeeIndexForm");
-          const sortInput = document.getElementById("sortBy");
-          const searchInput = document.getElementById("searchInput");
-
-          document.querySelectorAll(".sort-link").forEach(link => {
-            link.addEventListener("click", e => {
-              e.preventDefault();
-              sortInput.value = link.dataset.sort; // set sort key
-              form.submit(); // submit with current search + new sort
-            });
-          });
-
-              // Select/Deselect all
-        document.getElementById("select-all").addEventListener("change", function () {
-            const checked = this.checked;
-            document.querySelectorAll("input[name='selectedIds']").forEach(cb => cb.checked = checked);
-        });
-
-        // Debounce function to limit requests
-        function debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        }
-
-        // Submit form on search input change after 500ms
-        const submitSearch = debounce(() => {
-            form.submit();
-        }, 500);
-
-        searchInput.addEventListener("input", submitSearch);
-        });
-
-       
-    </script>
-}

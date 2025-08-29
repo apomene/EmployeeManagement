@@ -62,7 +62,7 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     }
 
     [HttpGet("departments")]
-    public async Task<ActionResult<Department>> GetDepartments()
+    public async Task<ActionResult<List<Department>>> GetDepartments()
     {
         var departments = await db.Departments.AsNoTracking().ToListAsync();
 
@@ -70,7 +70,7 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     }
 
     [HttpGet("{id:int}/skills")]
-    public async Task<ActionResult<Department>> GetEmployeeSkills(int id)
+    public async Task<ActionResult<List<EmployeeSkill>>> GetEmployeeSkills(int id)
     {
         var employeeSkills = await db.EmployeeSkills.
             Where(emp=>emp.EmployeeId == id).

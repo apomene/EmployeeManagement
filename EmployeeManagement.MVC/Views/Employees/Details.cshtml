@@ -18,6 +18,16 @@
                 </div>
             }
 
+            @if (Model.LatestSkillUpdate.Item2 != DateTime.MinValue)
+            {
+                <p><b>Latest Skill Name: </b> @Model.LatestSkillUpdate.Item1</p>
+                <p><b>Latest Skill Update Time:</b> @Model.LatestSkillUpdate.Item2.ToString("g")</p>
+            }
+            else
+            {
+                <p>Latest Skill Update: N/A</p>
+            }
+
             <h4 class="mt-4">Skills</h4>
             @if (Model.Skills.Any())
             {
@@ -25,7 +35,10 @@
                     @foreach (var s in Model.Skills)
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            @s.Name
+                            <!-- Skill Name -->
+                            <span class="fw-bold">@s.Name</span>
+
+                            <!-- Remove Button -->
                             <form asp-action="RemoveSkill" method="post" class="mb-0" onsubmit="return confirm('Are you sure you want to remove this skill?');">
                                 <input type="hidden" name="employeeId" value="@Model.Id" />
                                 <input type="hidden" name="skillId" value="@s.Id" />

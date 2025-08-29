@@ -6,6 +6,9 @@ namespace EmployeeManagement.MVC.Models
     {
         public int Id { get; set; }      // SkillId
         public string Name { get; set; } = string.Empty;
+
+        public DateTime? AssignedAt { get; set; }
+
     }
 
     public class EmployeeViewModel
@@ -25,6 +28,8 @@ namespace EmployeeManagement.MVC.Models
         public IEnumerable<SelectListItem>? AvailableSkills { get; set; }
 
         public List<int> SelectedSkillIds { get; set; } = new();
+
+        public Tuple<string, DateTime>? LatestSkillUpdate { get; set; } 
     }
 
 }

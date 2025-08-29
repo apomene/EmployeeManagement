@@ -56,8 +56,9 @@ namespace EmployeeManagement.MVC.Controllers
             var dto = await _http.GetFromJsonAsync<EmployeeDto>($"{StringConstants.EMPLOYEES}/{id}");
             var allSkills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
 
+            var employeeSkills = await _http.GetFromJsonAsync<List<EmployeeSkill>>($"{StringConstants.EMPLOYEES}/{id}/skills/");
 
-            var viewModel = GetViewModel(dto, allSkills);
+            var viewModel = GetViewModel(dto, allSkills, employeeSkills);
 
 
             return View(viewModel);
@@ -295,12 +296,19 @@ namespace EmployeeManagement.MVC.Controllers
             return RedirectToAction("Details", new { id = employeeId });
         }
 
-        private EmployeeViewModel GetViewModel(EmployeeDto dto, List<Skill> allSkills)
+        private EmployeeViewModel GetViewModel(EmployeeDto dto, List<Skill> allSkills, List<EmployeeSkill> skills)
         {
             var skillViewModel = new List<EmployeeSkillViewModel>();
-            skillViewModel = allSkills.Where(s => dto.Skills.Contains(s.Name))
-                .Select(skill => new EmployeeSkillViewModel { Id = skill.Id, Name = skill.Name })
+            skillViewModel = skills
+                .Select(skill => new EmployeeSkillViewModel { Id = skill.SkillId, 
+                    Name = allSkills.FirstOrDefault(s=>s.Id == skill.SkillId)!.Name, 
+                    AssignedAt = skill.AssignedAt?? DateTime.MinValue 
+                })
                 .ToList();
+
+            var latestSkill = skills
+                .OrderByDescending(s => s.AssignedAt)
+                .FirstOrDefault();
 
             var viewModel = new EmployeeViewModel
             {
@@ -312,7 +320,11 @@ namespace EmployeeManagement.MVC.Controllers
                 DepartmentId = dto.DepartmentId,
                 DepartmentName = _departments.FirstOrDefault(d => d.Id == dto.DepartmentId)?.Name ?? string.Empty,
                 Skills = skillViewModel,
-                AvailableSkills = new SelectList(allSkills, "Id", "Name")
+                AvailableSkills = new SelectList(allSkills, "Id", "Name"),
+                LatestSkillUpdate = latestSkill != null ? new Tuple<string, DateTime>
+                                                            (allSkills.FirstOrDefault(s => s.Id == latestSkill.SkillId)!.Name, 
+                                                             latestSkill.AssignedAt ?? DateTime.MinValue) 
+                                                         : null
             };
             return viewModel;
         }
