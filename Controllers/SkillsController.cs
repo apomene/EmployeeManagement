@@ -77,8 +77,8 @@ public class SkillsController(AppDbContext db) : ControllerBase
         var existing = await FindSkillAsync(id);
         if (existing is null) return NotFound();
 
-        if (existing.EmployeeSkills.Any())
-            return BadRequest("Cannot delete skill because it is assigned to one or more employees.");
+        if (db.EmployeeSkills.Where(x=>x.SkillId ==id).Any())
+            return BadRequest(StringConstants.FAIL_DELETE_SKILLS);
 
         try
         {
@@ -88,8 +88,8 @@ public class SkillsController(AppDbContext db) : ControllerBase
         }
         catch (DbUpdateException)
         {
-            // Fallback if DB restrict constraint blocks deletion
-            return BadRequest("Skill cannot be deleted because it is referenced by employees.");
+            // DB restrict constraint blocks deletion
+            return BadRequest(StringConstants.FAIL_DELETE_SKILLS);
         }
     }
 

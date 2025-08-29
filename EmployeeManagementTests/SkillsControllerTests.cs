@@ -188,7 +188,7 @@ namespace EmployeeManagement.Tests
             Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
             
             var badRequest = result as BadRequestObjectResult;
-            Assert.That("Cannot delete skill because it is assigned to one or more employees." == badRequest.Value);
+            Assert.That(StringConstants.FAIL_DELETE_SKILLS == badRequest.Value);
         }
     }
 }

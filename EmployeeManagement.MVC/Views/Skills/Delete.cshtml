@@ -7,8 +7,15 @@
     <strong>@Model.Name</strong> - @Model.Description
 </div>
 
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
 <form asp-action="DeleteConfirmed" method="post">
     <input type="hidden" asp-for="Id" />
     <button type="submit" class="btn btn-danger m-5px">Delete</button>
     <a class="btn btn-secondary m-5px" asp-action="Index">Cancel</a>
 </form>
+

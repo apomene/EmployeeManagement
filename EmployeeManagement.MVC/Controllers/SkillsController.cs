@@ -70,6 +70,7 @@ namespace EmployeeManagement.Controllers
         {
             var skill = await _http.GetFromJsonAsync<Skill>($"{StringConstants.SKILLS}/{id}");
             if (skill == null) return NotFound();
+
             return View(skill);
         }
 
@@ -80,9 +81,19 @@ namespace EmployeeManagement.Controllers
             var response = await _http.DeleteAsync($"{StringConstants.SKILLS}/{id}");
             if (response.IsSuccessStatusCode)
                 return RedirectToAction(nameof(Index));
+            if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                TempData["ErrorMessage"] = string.IsNullOrWhiteSpace(errorMessage)
+                    ? StringConstants.FAIL_DELETE_SKILLS
+                    : errorMessage;
 
-            ModelState.AddModelError("", StringConstants.ERROR_DELETE_SKILL);
-            return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Delete), new { id });
+            }
+
+            TempData["ErrorMessage"] = StringConstants.ERROR_DELETE_SKILL;
+            return RedirectToAction(nameof(Delete), new { id });
+
         }
     }
 }
