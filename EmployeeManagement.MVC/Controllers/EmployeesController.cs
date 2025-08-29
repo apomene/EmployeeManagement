@@ -1,11 +1,7 @@
-﻿using EmployeeManagement.Controllers;
-using EmployeeManagement.Models;
+﻿using EmployeeManagement.Models;
 using EmployeeManagement.MVC.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Net.Http.Json;
-using System.Reflection;
-using System.Xml.Linq;
 
 namespace EmployeeManagement.MVC.Controllers
 {
@@ -253,11 +249,11 @@ namespace EmployeeManagement.MVC.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
-                TempData["Error"] = "Failed to delete employees.";
+                TempData["Error"] = StringConstants.FAIL_DELETE_EMPLOYEES;
                 return RedirectToAction(nameof(Index));
             }
 
-            TempData["Success"] = "Employees deleted successfully.";
+            TempData["Success"] =  StringConstants.OK_DELETE_EMPLOYEES;
             return RedirectToAction(nameof(Index));
 
         }

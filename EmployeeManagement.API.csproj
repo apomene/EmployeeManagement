@@ -8,18 +8,22 @@
 
   <ItemGroup>
     <Compile Remove="EmployeeManagement.Models\**" />
+    <Compile Remove="EmployeeManagement.MVC.Tests\**" />
     <Compile Remove="EmployeeManagement.MVC\**" />
     <Compile Remove="EmployeeManagementTests\**" />
     <Compile Remove="wwwroot\**" />
     <Content Remove="EmployeeManagement.Models\**" />
+    <Content Remove="EmployeeManagement.MVC.Tests\**" />
     <Content Remove="EmployeeManagement.MVC\**" />
     <Content Remove="EmployeeManagementTests\**" />
     <Content Remove="wwwroot\**" />
     <EmbeddedResource Remove="EmployeeManagement.Models\**" />
+    <EmbeddedResource Remove="EmployeeManagement.MVC.Tests\**" />
     <EmbeddedResource Remove="EmployeeManagement.MVC\**" />
     <EmbeddedResource Remove="EmployeeManagementTests\**" />
     <EmbeddedResource Remove="wwwroot\**" />
     <None Remove="EmployeeManagement.Models\**" />
+    <None Remove="EmployeeManagement.MVC.Tests\**" />
     <None Remove="EmployeeManagement.MVC\**" />
     <None Remove="EmployeeManagementTests\**" />
     <None Remove="wwwroot\**" />

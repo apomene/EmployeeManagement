@@ -5,7 +5,7 @@ VisualStudioVersion = 17.14.36327.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmployeeManagement.API", "EmployeeManagement.API.csproj", "{11AB561F-4E45-40CC-8BEC-17520F43A8C4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmployeeManagementTests", "EmployeeManagementTests\EmployeeManagementTests.csproj", "{3DF264BC-3388-458C-9413-D42EF620142B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmployeeManagement.API.Tests", "EmployeeManagementTests\EmployeeManagement.API.Tests.csproj", "{3DF264BC-3388-458C-9413-D42EF620142B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmployeeManagement.MVC", "EmployeeManagement.MVC\EmployeeManagement.MVC.csproj", "{A6C48AC6-AD96-4AE5-94C7-AC5B90429E38}"
 EndProject
