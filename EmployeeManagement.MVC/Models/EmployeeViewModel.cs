@@ -23,6 +23,8 @@ namespace EmployeeManagement.MVC.Models
 
         // For Add Skill dropdown
         public IEnumerable<SelectListItem>? AvailableSkills { get; set; }
+
+        public List<int> SelectedSkillIds { get; set; } = new();
     }
 
 }

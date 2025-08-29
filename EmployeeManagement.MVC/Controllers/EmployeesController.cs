@@ -1,4 +1,5 @@
-﻿using EmployeeManagement.Models;
+﻿using EmployeeManagement.Controllers;
+using EmployeeManagement.Models;
 using EmployeeManagement.MVC.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -17,7 +18,7 @@ namespace EmployeeManagement.MVC.Controllers
         {
             var apiName = configuration.GetValue<string>("ApiSettings:EmployeesApiName");
             _http = factory.CreateClient(apiName);
-            _departments = GetDepartments();
+            _departments = GetDepartments().Result;
         }
         // GET: Employees
         public async Task<IActionResult> Index(string? sortBy, string? search)
@@ -40,7 +41,7 @@ namespace EmployeeManagement.MVC.Controllers
                 "lastname_desc" => employees.OrderByDescending(e => e.LastName).ToList(),
                 "hiredate_asc" => employees.OrderBy(e => e.HireDate).ToList(),
                 "hiredate_desc" => employees.OrderByDescending(e => e.HireDate).ToList(),
-                _ => employees.OrderBy(e => e.LastName).ToList() 
+                _ => employees.OrderBy(e => e.LastName).ToList()
             };
 
             ViewData["CurrentSearch"] = search;
@@ -50,13 +51,14 @@ namespace EmployeeManagement.MVC.Controllers
         }
 
         // GET: Employees/Details/5   
-         public async Task<IActionResult> Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
             var dto = await _http.GetFromJsonAsync<EmployeeDto>($"{StringConstants.EMPLOYEES}/{id}");
             var allSkills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
 
 
             var viewModel = GetViewModel(dto, allSkills);
+
 
             return View(viewModel);
         }
@@ -66,7 +68,7 @@ namespace EmployeeManagement.MVC.Controllers
         // GET: Create
         public async Task<IActionResult> Create()
         {
-           
+
             var skills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
 
             var viewModel = new CreateEmployeeViewModel
@@ -92,37 +94,31 @@ namespace EmployeeManagement.MVC.Controllers
                 return View(viewModel);
             }
 
-            int skillIdToAssign;
             List<string> skillIsToAssign = new List<string>();
 
-            if (viewModel.SelectedSkillId == -1 && !string.IsNullOrWhiteSpace(viewModel.NewSkillName))
+            foreach (var skillId in viewModel.SelectedSkillIds)
             {
-                // Create the new skill via API
-                var skillResponse = await _http.PostAsJsonAsync(StringConstants.SKILLS,  new CreateSkillDto( viewModel.NewSkillName , viewModel.NewSkillDescription));
-                if (!skillResponse.IsSuccessStatusCode)
-                {
-                    TempData["SkillError"] = "Could not create new skill.";
-                    return RedirectToAction(nameof(Create));
-                }
 
-                var newSkill = await skillResponse.Content.ReadFromJsonAsync<Skill>();
-                skillIdToAssign = newSkill.Id;
-                skillIsToAssign.Add(newSkill.Name);
-            }
-            else
-            {
-                skillIdToAssign = viewModel.SelectedSkillId.Value;
-                if (skillIdToAssign > 0)
+                var selectedSkill = skills.FirstOrDefault(s => s.Id == skillId);
+                if (selectedSkill != null)
                 {
-                    var selectedSkill = skills.FirstOrDefault(s => s.Id == skillIdToAssign);
-                    if (selectedSkill != null)
+                    skillIsToAssign.Add(selectedSkill.Name);
+                }
+                else if (!string.IsNullOrWhiteSpace(viewModel.NewSkillName))
+                {
+                    // Create the new skill via API
+                    var skillResponse = await _http.PostAsJsonAsync(StringConstants.SKILLS, new CreateSkillDto(viewModel.NewSkillName, viewModel.NewSkillDescription));
+                    if (!skillResponse.IsSuccessStatusCode)
                     {
-                        skillIsToAssign.Add(selectedSkill.Name);
+                        TempData["SkillError"] = "Could not create new skill.";
+                        return RedirectToAction(nameof(Create));
                     }
+
+                    var newSkill = await skillResponse.Content.ReadFromJsonAsync<Skill>();
+                    skillIsToAssign.Add(newSkill.Name);
                 }
             }
 
-         
             // Map ViewModel to DTO or entity
             var dto = new EmployeeDto(
                 viewModel.Id,
@@ -148,14 +144,28 @@ namespace EmployeeManagement.MVC.Controllers
         // GET: Employees/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
-           
-            var employee = await _http.GetFromJsonAsync<Employee>($"{StringConstants.EMPLOYEES}/{id}");
+
+            var employee = await _http.GetFromJsonAsync<EmployeeDto>($"{StringConstants.EMPLOYEES}/{id}");
             if (employee == null) return NotFound();
 
-            
+
             ViewData["Departments"] = new SelectList(_departments, "Id", "Name", employee.DepartmentId);
 
-            return View(employee);
+            var vm = new EmployeeViewModel
+            {
+                Id = employee.Id,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                Email = employee.Email,
+                HireDate = employee.HireDate,
+                DepartmentId = employee.DepartmentId
+            };
+
+            var skills = await PopulateSkills(vm);
+            vm.Skills = skills.Where(s => employee.Skills.Contains(s.Name))
+                .Select(s => new EmployeeSkillViewModel { Id = s.Id, Name = s.Name })
+                .ToList();
+            return View(vm);
 
         }
 
@@ -182,7 +192,7 @@ namespace EmployeeManagement.MVC.Controllers
         // GET: Delete
         public async Task<IActionResult> Delete(int id)
         {
-            
+
             var employee = await _http.GetFromJsonAsync<EmployeeDto>($"{StringConstants.EMPLOYEES}/{id}");
             if (employee == null)
                 return NotFound();
@@ -256,7 +266,7 @@ namespace EmployeeManagement.MVC.Controllers
             {
                 TempData["SkillError"] = StringConstants.UNEXPTECTED_ERROR;
             }
-               
+
             return RedirectToAction(nameof(Details), new { id = employeeId });
         }
 
@@ -272,10 +282,10 @@ namespace EmployeeManagement.MVC.Controllers
         private EmployeeViewModel GetViewModel(EmployeeDto dto, List<Skill> allSkills)
         {
             var skillViewModel = new List<EmployeeSkillViewModel>();
-            skillViewModel = allSkills.Where(s=>dto.Skills.Contains(s.Name))
+            skillViewModel = allSkills.Where(s => dto.Skills.Contains(s.Name))
                 .Select(skill => new EmployeeSkillViewModel { Id = skill.Id, Name = skill.Name })
                 .ToList();
-            
+
             var viewModel = new EmployeeViewModel
             {
                 Id = dto.Id,
@@ -284,7 +294,7 @@ namespace EmployeeManagement.MVC.Controllers
                 Email = dto.Email,
                 HireDate = dto.HireDate,
                 DepartmentId = dto.DepartmentId,
-                DepartmentName = _departments.FirstOrDefault(d => d.Id == dto.DepartmentId)?.Name ?? string.Empty,  
+                DepartmentName = _departments.FirstOrDefault(d => d.Id == dto.DepartmentId)?.Name ?? string.Empty,
                 Skills = skillViewModel,
                 AvailableSkills = new SelectList(allSkills, "Id", "Name")
             };
@@ -293,7 +303,7 @@ namespace EmployeeManagement.MVC.Controllers
 
         private EmployeeViewModel GetViewModel(EmployeeDto dto)
         {
-           
+
             var viewModel = new EmployeeViewModel
             {
                 Id = dto.Id,
@@ -307,11 +317,21 @@ namespace EmployeeManagement.MVC.Controllers
             return viewModel;
         }
 
-        private List<Department> GetDepartments()
+        private async Task<List<Department>> GetDepartments()
         {
-            var departments = _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}").Result;
+            var departments = await _http.GetFromJsonAsync<List<Department>>($"{StringConstants.EMPLOYEES}/{StringConstants.DEPARTMENTS}");
             return departments ?? new List<Department>();
         }
+
+        private async Task<List<Skill>> PopulateSkills(EmployeeViewModel viewModel)
+        {
+            var allSkills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
+            viewModel.AvailableSkills = allSkills
+                .Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name })
+                .ToList();
+            return allSkills ?? new List<Skill>();
+        }
+
 
 
     }

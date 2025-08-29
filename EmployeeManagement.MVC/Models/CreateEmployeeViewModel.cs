@@ -11,8 +11,9 @@ namespace EmployeeManagement.MVC.Models
         public DateTime HireDate { get; set; } = DateTime.Now;
         public int DepartmentId { get; set; }
 
-        
+
         public int? SelectedSkillId { get; set; }
+        public List<int>? SelectedSkillIds { get; set; }
         public string? NewSkillName { get; set; }
         public string? NewSkillDescription { get; set; }
 
