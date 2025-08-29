@@ -1,7 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using EmployeeManagement.Models;
 using EmployeeManagement.Data;
+using EmployeeManagement.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 
 namespace EmployeeManagement.Controllers;
@@ -91,6 +93,43 @@ public class SkillsController(AppDbContext db) : ControllerBase
             // DB restrict constraint blocks deletion
             return BadRequest(StringConstants.FAIL_DELETE_SKILLS);
         }
+    }
+
+    [HttpGet("/export")]
+    public async Task<IActionResult> ExportSkillsToCsv()
+    {
+        var skills = await db.Skills
+            .AsNoTracking()
+            .OrderBy(s => s.Name)
+            .Select(s => new SkillDto(s.Id, s.Name, s.Description, s.CreatedAt))
+            .ToListAsync();
+
+        if (!skills.Any())
+        {
+            return NotFound(StringConstants.NO_SKILLS);
+        }
+
+        var csvBuilder = new StringBuilder();
+
+        var properties = typeof(SkillDto).GetProperties();
+           
+        csvBuilder.AppendLine(string.Join(",", properties.Select(p => p.Name)));
+
+        
+        foreach (var skill in skills)
+        {
+            var values = properties.Select(p =>
+            {
+                var value = p.GetValue(skill, null);
+                return value is DateTime dt ? dt.ToString("o") : value?.ToString();
+            });
+            csvBuilder.AppendLine(string.Join(",", values));
+        }
+
+        var fileName = $"skills_export_{DateTime.UtcNow:yyyyMMddHHmmss}.csv";
+        var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+
+        return File(csvBytes, "text/csv", fileName);
     }
 
     private async Task<Skill?> FindSkillAsync(int id) =>

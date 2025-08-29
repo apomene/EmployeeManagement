@@ -3,6 +3,7 @@ using EmployeeManagement.Data;
 using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 
 namespace EmployeeManagement.Tests
@@ -190,5 +191,33 @@ namespace EmployeeManagement.Tests
             var badRequest = result as BadRequestObjectResult;
             Assert.That(StringConstants.FAIL_DELETE_SKILLS == badRequest.Value);
         }
+
+        [Test]
+        public async Task ExportSkillsToCsv_ReturnsFile_WithCorrectCsvContent()
+        {
+                     
+            // Act
+            var result = await  _controller.ExportSkillsToCsv() as FileContentResult;
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That("text/csv" == result.ContentType);
+
+            var csvText = Encoding.UTF8.GetString(result.FileContents);
+            Assert.That(csvText.Contains("Id,Name,Description,CreatedAt"));
+            Assert.That(csvText.Contains("TestSkill"));
+        }
+
+        [Test]
+        public async Task ExportSkillsToCsv_NoSkills_ReturnsNotFound()
+        {
+            _dbContext.Skills.RemoveRange(_dbContext.Skills);
+            await _dbContext.SaveChangesAsync();
+
+            var result = await _controller.ExportSkillsToCsv() as FileContentResult;
+
+            Assert.That(result, Is.Null);
+        }
     }
 }
+

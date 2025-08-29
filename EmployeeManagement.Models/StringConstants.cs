@@ -15,6 +15,7 @@ namespace EmployeeManagement.Models
         public const string SKILL_IN_USE = "Employee already has the skill";
         public const string UNEXPTECTED_ERROR = "An unexpected error occurred while adding the skill.";
         public const string FAIL_DELETE_SKILLS = "Cannot delete skill because it is assigned to one or more employees.";
+        public const string NO_SKILLS = "No Skills Found";
 
         // Employees
         public const string EMPLOYEES = "employees";
