@@ -73,17 +73,3 @@
     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
 
-@section Scripts {
-    <script>
-        document.getElementById("SelectedSkillIds").addEventListener("change", function () {
-            let newSkillDiv = document.getElementById("newSkillDiv");
-            let selectedValues = Array.from(this.selectedOptions).map(opt => opt.value);
-
-            if (selectedValues.includes("-1")) {
-                newSkillDiv.style.display = "block";
-            } else {
-                newSkillDiv.style.display = "none";
-            }
-        });
-    </script>
-}
