@@ -1,10 +1,19 @@
 using EmployeeManagement.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1.0", new OpenApiInfo { Title = "Employee API", Version = "v1.0" });
+});
+
+
 
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -16,13 +25,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
+    c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Employee API V1.0"); // doc name is v1
+    c.RoutePrefix = string.Empty; // Swagger as default page
+});
 
 
 app.UseHttpsRedirection();
@@ -33,5 +41,5 @@ app.UseAuthorization();
 app.MapStaticAssets();
 
 app.MapControllers();
- 
+
 app.Run();

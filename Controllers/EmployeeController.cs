@@ -4,11 +4,19 @@ using EmployeeManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+/// <summary>
+/// Controller for managing Employees and their Skills.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class EmployeesController(AppDbContext db) : ControllerBase
-{    
-    
+{
+    /// <summary>
+    /// Gets all employees with optional filtering.
+    /// </summary>
+    /// <param name="filter">Filter parameters to apply.</param>
+    /// <returns>List of employees.</returns>
+    [HttpGet]
     public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetEmployees([FromQuery] FilterCollection filter)
     {
         var query = db.Employees
@@ -32,22 +40,18 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return Ok(employees);
     }
 
-    private async Task<Employee?> GetEmployeeById(int id)
-    {
-        return  await db.Employees
-       .Include(e => e.Department)
-       .Include(e => e.EmployeeSkills)
-           .ThenInclude(es => es.Skill)
-       .FirstOrDefaultAsync(e => e.Id == id);
-    }
-
+    /// <summary>
+    /// Gets an employee by Id.
+    /// </summary>
+    /// <param name="id">Employee Id.</param>
+    /// <returns>Employee details.</returns>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<EmployeeDto>> GetEmployee(int id)
     {
         var employee = await GetEmployeeById(id);
 
         if (employee == null) return NotFound();
-     
+
         var dto = new EmployeeDto(
             employee.Id,
             employee.FirstName,
@@ -61,25 +65,38 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return Ok(dto);
     }
 
+    /// <summary>
+    /// Gets all departments.
+    /// </summary>
+    /// <returns>List of departments.</returns>
     [HttpGet("departments")]
     public async Task<ActionResult<List<Department>>> GetDepartments()
     {
         var departments = await db.Departments.AsNoTracking().ToListAsync();
-
         return Ok(departments);
     }
 
+    /// <summary>
+    /// Gets all skills assigned to an employee.
+    /// </summary>
+    /// <param name="id">Employee Id.</param>
+    /// <returns>List of EmployeeSkills.</returns>
     [HttpGet("{id:int}/skills")]
     public async Task<ActionResult<List<EmployeeSkill>>> GetEmployeeSkills(int id)
     {
-        var employeeSkills = await db.EmployeeSkills.
-            Where(emp=>emp.EmployeeId == id).
-            AsNoTracking().
-            ToListAsync();
+        var employeeSkills = await db.EmployeeSkills
+            .Where(emp => emp.EmployeeId == id)
+            .AsNoTracking()
+            .ToListAsync();
 
         return Ok(employeeSkills);
     }
 
+    /// <summary>
+    /// Creates a new employee.
+    /// </summary>
+    /// <param name="dto">Employee data.</param>
+    /// <returns>Created employee.</returns>
     [HttpPost]
     public async Task<ActionResult<EmployeeDto>> CreateEmployee(CreateEmployeeDto dto)
     {
@@ -94,8 +111,6 @@ public class EmployeesController(AppDbContext db) : ControllerBase
             HireDate = dto.HireDate,
             Email = dto.Email,
             DepartmentId = dto.DepartmentId
-
-
         };
 
         if (dto.Skills != null && dto.Skills.Any())
@@ -128,6 +143,12 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, resultDto);
     }
 
+    /// <summary>
+    /// Updates an existing employee.
+    /// </summary>
+    /// <param name="id">Employee Id.</param>
+    /// <param name="dto">Updated employee data.</param>
+    /// <returns>No content if successful.</returns>
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateEmployee(int id, UpdateEmployeeDto dto)
     {
@@ -143,15 +164,14 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         employee.HireDate = dto.HireDate;
         employee.Email = dto.Email;
         employee.DepartmentId = dto.DepartmentId;
+
         if (dto.Skills != null && dto.Skills.Any())
         {
             foreach (var skillName in dto.Skills)
             {
                 var skill = await db.Skills.FirstOrDefaultAsync(s => s.Name == skillName)
                             ?? new Skill { Name = skillName };
-                var existingSkill = employee.EmployeeSkills
-                    .FirstOrDefault(es => es.Skill.Name == skillName);
-                if (existingSkill == null)
+                if (!employee.EmployeeSkills.Any(es => es.Skill.Name == skillName))
                 {
                     employee.EmployeeSkills.Add(new EmployeeSkill
                     {
@@ -159,7 +179,6 @@ public class EmployeesController(AppDbContext db) : ControllerBase
                         Skill = skill
                     });
                 }
-               
             }
         }
 
@@ -167,6 +186,11 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Deletes an employee by Id.
+    /// </summary>
+    /// <param name="id">Employee Id.</param>
+    /// <returns>No content if successful.</returns>
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteEmployee(int id)
     {
@@ -178,17 +202,22 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Deletes multiple employees.
+    /// </summary>
+    /// <param name="ids">List of employee Ids.</param>
+    /// <returns>No content if successful.</returns>
     [HttpDelete]
     public async Task<IActionResult> DeleteEmployees([FromBody] List<int> ids)
     {
-        if (ids == null || ids.Count == 0)
+        if (ids == null || !ids.Any())
             return BadRequest(StringConstants.NO_EMPLOYEE_ID);
 
         var employees = await db.Employees
             .Where(e => ids.Contains(e.Id))
             .ToListAsync();
 
-        if (employees.Count == 0)
+        if (!employees.Any())
             return NotFound(StringConstants.NO_MATCHING_EMPLOYEES);
 
         db.Employees.RemoveRange(employees);
@@ -197,7 +226,9 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
-
+    /// <summary>
+    /// Adds a skill to an employee.
+    /// </summary>
     [HttpPost("{id:int}/skills/{skillId:int}")]
     public async Task<IActionResult> AddSkill(int id, int skillId)
     {
@@ -206,29 +237,27 @@ public class EmployeesController(AppDbContext db) : ControllerBase
             .ThenInclude(es => es.Skill)
             .FirstOrDefaultAsync(e => e.Id == id);
 
-        if (employee == null)
-            return NotFound(StringConstants.NO_MATCHING_EMPLOYEES);
+        if (employee == null) return NotFound(StringConstants.NO_MATCHING_EMPLOYEES);
 
         var skill = await db.Skills.FindAsync(skillId);
-        if (skill == null)
-            return BadRequest(StringConstants.NO_SKILL);
+        if (skill == null) return BadRequest(StringConstants.NO_SKILL);
 
         if (employee.EmployeeSkills.Any(es => es.SkillId == skillId))
-        {
             return BadRequest($"{StringConstants.SKILL_IN_USE} '{skill.Name}'.");
-        }
 
         employee.EmployeeSkills.Add(new EmployeeSkill
         {
-            EmployeeId = employee.Id,
+            EmployeeId = id,
             SkillId = skillId
         });
 
         await db.SaveChangesAsync();
-
         return NoContent();
     }
 
+    /// <summary>
+    /// Removes a skill from an employee.
+    /// </summary>
     [HttpDelete("{id:int}/skills/{skillId:int}")]
     public async Task<IActionResult> RemoveSkill(int id, int skillId)
     {
@@ -241,4 +270,12 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return NoContent();
     }
+
+    // Private helper to get employee with skills and department
+    private async Task<Employee?> GetEmployeeById(int id) =>
+        await db.Employees
+           .Include(e => e.Department)
+           .Include(e => e.EmployeeSkills)
+               .ThenInclude(es => es.Skill)
+           .FirstOrDefaultAsync(e => e.Id == id);
 }
