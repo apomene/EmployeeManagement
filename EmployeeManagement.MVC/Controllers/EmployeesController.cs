@@ -77,6 +77,8 @@ namespace EmployeeManagement.MVC.Controllers
                 AvailableSkills = new SelectList(skills, "Id", "Name")
             };
 
+            ViewData["IsEdit"] = false;
+
             return View(viewModel);
         }
 
@@ -148,46 +150,34 @@ namespace EmployeeManagement.MVC.Controllers
             var employee = await _http.GetFromJsonAsync<EmployeeDto>($"{StringConstants.EMPLOYEES}/{id}");
             if (employee == null) return NotFound();
 
-
             ViewData["Departments"] = new SelectList(_departments, "Id", "Name", employee.DepartmentId);
 
-            var vm = new EmployeeViewModel
+            var skills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
+
+            var selectedSkillIds = skills
+                .Where(s => employee.Skills.Contains(s.Name))
+                .Select(s => s.Id)
+                .ToList();
+
+            var viewModel = new CreateEmployeeViewModel
             {
                 Id = employee.Id,
                 FirstName = employee.FirstName,
                 LastName = employee.LastName,
                 Email = employee.Email,
                 HireDate = employee.HireDate,
-                DepartmentId = employee.DepartmentId
+                DepartmentId = employee.DepartmentId,
+                Departments = new SelectList(_departments, "Id", "Name", employee.DepartmentId),
+                AvailableSkills = new SelectList(skills, "Id", "Name", selectedSkillIds),
+                SelectedSkillIds = selectedSkillIds 
             };
 
-            var skills = await PopulateSkills(vm);
-            vm.Skills = skills.Where(s => employee.Skills.Contains(s.Name))
-                .Select(s => new EmployeeSkillViewModel { Id = s.Id, Name = s.Name })
-                .ToList();
-            return View(vm);
+            ViewData["IsEdit"] = true;
+
+            return View("Create", viewModel);
 
         }
-
-        // POST: Employees/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Employee employee)
-        {
-            if (id != employee.Id)
-            {
-                ModelState.AddModelError("", StringConstants.ID_MISMATCH);
-                return View(employee);
-            }
-            if (!ModelState.IsValid) return View(employee);
-
-            var response = await _http.PutAsJsonAsync($"{StringConstants.EMPLOYEES}/{id}", employee);
-            if (response.IsSuccessStatusCode)
-                return RedirectToAction(nameof(Index));
-
-            ModelState.AddModelError("", StringConstants.ERROR_UPDATE_EMPLOYEE);
-            return View(employee);
-        }
+     
 
         // GET: Delete
         public async Task<IActionResult> Delete(int id)

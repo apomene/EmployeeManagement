@@ -1,9 +1,21 @@
 ﻿@model EmployeeManagement.MVC.Models.CreateEmployeeViewModel
 
+@{
+    bool isEdit = ViewData["IsEdit"] != null && (bool)ViewData["IsEdit"];
+    string title = isEdit ? "Update Employee" : "Create Employee";
+    string buttonText = isEdit ? "Update" : "Create";
+    string skillPlaceholder = "-- Add Non Existing Skill --";
+}
 
-<h2>Create Employee</h2>
 
-<form asp-action="Create" method="post">
+<h2>@title</h2>
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post">
+    @if (isEdit)
+    {
+        <input type="hidden" asp-for="Id" />
+    }
+
     <div class="mb-3">
         <label asp-for="FirstName" class="form-label"></label>
         <input asp-for="FirstName" class="form-control" />
@@ -41,11 +53,10 @@
         <label asp-for="SelectedSkillIds" class="form-label">Skills</label>
         <select asp-for="SelectedSkillIds" asp-items="Model.AvailableSkills"
                 multiple class="form-control" id="SelectedSkillIds">
-            <option value="-1">-- Add Non Existing Skill --</option>
+            <option value="-1">@skillPlaceholder</option>
         </select>
         <span asp-validation-for="SelectedSkillIds" class="text-danger"></span>
     </div>
-
 
     <div id="newSkillDiv" style="display:none;">
         <div class="mb-3">
@@ -61,7 +72,7 @@
     </div>
    
 
-    <button type="submit" class="btn btn-primary">Create</button>
+    <button type="submit" class="btn btn-primary">@buttonText</button>
     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
 
