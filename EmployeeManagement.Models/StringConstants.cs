@@ -32,6 +32,9 @@ namespace EmployeeManagement.Models
         public const string NO_EMPLOYEES = "No Employees Found";
 
         // Log Messages
+        public const string ERROR_500 = "An error occurred while executing API action.";
+
+        //Employees Controller
         public const string LOG_EMPLOYEE_CREATED = "Created employee {FirstName} {LastName}";
         public const string LOG_EMPLOYEE_UPDATED = "Updated employee {EmployeeId}";
         public const string LOG_EMPLOYEE_DELETED = "Deleted employee {EmployeeId}";
@@ -42,7 +45,14 @@ namespace EmployeeManagement.Models
         public const string LOG_EMPLOYEE_SKILLS_FETCHED = "Fetched skills for employee {EmployeeId}";
         public const string LOG_EMPLOYEE_FETCHED = "Fetched employee with ID {EmployeeId}";
         public const string LOG_EMPLOYEES_FETCHED = "Fetched employees";
-        public const string ERROR_500 = "An error occurred while executing API action.";
+
+        //Skills Controller
+        public const string LOG_SKILLS_FETCHED = "Fetched all skills";
+        public const string LOG_SKILL_FETCHED = "Fetched skill {SkillId}";
+        public const string LOG_SKILL_CREATED = "Created skill {SkillName} with ID {SkillId}";
+        public const string LOG_SKILL_UPDATED = "Updated skill {SkillId}";
+        public const string LOG_SKILL_DELETED = "Deleted skill {SkillId}";
+        public const string LOG_SKILLS_EXPORTED = "Exported skills to CSV";
 
     }
 }

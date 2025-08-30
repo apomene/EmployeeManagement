@@ -53,7 +53,7 @@ namespace EmployeeManagement.Tests
         {
             var result = await _controller.GetSkills();
 
-            var skills = (result.Result as OkObjectResult)?.Value as List<SkillDto>;
+            var skills = result?.Value as List<SkillDto>;
 
 
             Assert.Multiple(() =>
@@ -69,11 +69,13 @@ namespace EmployeeManagement.Tests
         {
             var result = await _controller.GetSkill(SeedSkillId);
 
+            var skill = (result as OkObjectResult)?.Value as SkillDto;
+
             Assert.Multiple(() =>
             {
-                Assert.That(result.Result, Is.Null); // success path
-                Assert.That(result.Value, Is.Not.Null);
-                Assert.That(result.Value!.Name, Is.EqualTo(SeedSkillName));
+                Assert.That(result, Is.InstanceOf<ObjectResult>());
+                Assert.That(result, Is.Not.Null);
+                Assert.That(skill.Name, Is.EqualTo(SeedSkillName));
             });
         }
 
@@ -82,7 +84,7 @@ namespace EmployeeManagement.Tests
         {
             var result = await _controller.GetSkill(999);
 
-            Assert.That(result.Result, Is.TypeOf<NotFoundResult>());
+            Assert.That(result, Is.TypeOf<NotFoundObjectResult>());
         }
 
         [Test]
@@ -94,7 +96,7 @@ namespace EmployeeManagement.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(result.Result, Is.TypeOf<CreatedAtActionResult>());
+                Assert.That(result, Is.TypeOf<CreatedAtActionResult>());
                 Assert.That(_dbContext.Skills.Count(), Is.EqualTo(2));
             });
         }
@@ -108,9 +110,9 @@ namespace EmployeeManagement.Tests
             var result = await _controller.CreateSkill(newSkill); // Attempt duplicate
 
             // Assert
-            Assert.That(result.Result, Is.InstanceOf<ObjectResult>());
-            var objectResult = result.Result as ObjectResult;
-            Assert.That(objectResult!.StatusCode, Is.EqualTo(405));
+            Assert.That(result, Is.InstanceOf<ObjectResult>());
+            var objectResult = result as ObjectResult;
+            Assert.That(objectResult!.StatusCode, Is.EqualTo(400));
             Assert.That(objectResult.Value, Is.EqualTo(StringConstants.SKILL_EXISTS));
 
             Assert.That(_dbContext.Skills.Count(), Is.EqualTo(2));

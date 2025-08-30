@@ -20,15 +20,22 @@ public class SkillsController(AppDbContext db, ILogger<EmployeesController> logg
     /// </summary>
     /// <returns>A list of <see cref="SkillDto"/> objects.</returns>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<SkillDto>>> GetSkills()
+    public Task<ActionResult<IEnumerable<SkillDto>>> GetSkills()
     {
-        var skills = await db.Skills
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            GetSkillsInternal,
+            StringConstants.LOG_SKILLS_FETCHED
+        );
+    }
+
+    private async Task<IEnumerable<SkillDto>> GetSkillsInternal()
+    {
+        return await db.Skills
             .AsNoTracking()
             .OrderBy(s => s.Name)
             .Select(s => new SkillDto(s.Id, s.Name, s.Description, s.CreatedAt))
             .ToListAsync();
-
-        return Ok(skills);
     }
 
     /// <summary>
@@ -37,28 +44,45 @@ public class SkillsController(AppDbContext db, ILogger<EmployeesController> logg
     /// <param name="id">The ID of the skill to retrieve.</param>
     /// <returns>The <see cref="SkillDto"/> of the requested skill, or 404 if not found.</returns>
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<SkillDto>> GetSkill(int id)
+    public Task<IActionResult> GetSkill(int id)
+    {
+        return ActionWrapper.ExecuteAsync(logger, () => GetSkillInternal(id), StringConstants.LOG_SKILL_FETCHED, id);
+    }
+
+    private async Task<IActionResult> GetSkillInternal(int id)
     {
         var skill = await FindSkillAsync(id);
-        if (skill is null) return NotFound();
+        if (skill == null) return NotFound(StringConstants.NO_SKILL);
 
-        return new SkillDto(skill.Id, skill.Name, skill.Description, skill.CreatedAt);
+        var dto = new SkillDto(skill.Id, skill.Name, skill.Description, skill.CreatedAt);
+        return Ok(dto);
     }
+
 
     /// <summary>
     /// Creates a new skill.
     /// </summary>
     /// <param name="dto">The skill data transfer object containing Name and Description.</param>
     /// <returns>The created <see cref="SkillDto"/> with 201 status code, or 405 if a skill with the same name exists.</returns>
+   // POST: api/skills
     [HttpPost]
-    public async Task<ActionResult<SkillDto>> CreateSkill([FromBody] CreateSkillDto dto)
+    public Task<IActionResult> CreateSkill([FromBody] CreateSkillDto dto)
+    {
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => CreateSkillInternal(dto),
+            StringConstants.LOG_SKILL_CREATED, dto.Name
+        );
+    }
+
+    private async Task<IActionResult> CreateSkillInternal(CreateSkillDto dto)
     {
         var existing = await db.Skills
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Name.ToLower() == dto.Name.ToLower());
 
         if (existing != null)
-            return StatusCode(StatusCodes.Status405MethodNotAllowed, StringConstants.SKILL_EXISTS);
+             return BadRequest(StringConstants.SKILL_EXISTS);
 
         var skill = new Skill
         {
@@ -70,9 +94,9 @@ public class SkillsController(AppDbContext db, ILogger<EmployeesController> logg
         db.Skills.Add(skill);
         await db.SaveChangesAsync();
 
-        var resultDto = new SkillDto(skill.Id, skill.Name, skill.Description, skill.CreatedAt);
-        return CreatedAtAction(nameof(GetSkill), new { id = skill.Id }, resultDto);
+        return CreatedAtAction(nameof(CreateSkillInternal), skill);
     }
+
 
     /// <summary>
     /// Updates an existing skill.
@@ -81,7 +105,16 @@ public class SkillsController(AppDbContext db, ILogger<EmployeesController> logg
     /// <param name="dto">The updated skill data.</param>
     /// <returns>NoContent if successful, 400 if ID mismatch, or 404 if skill not found.</returns>
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> UpdateSkill(int id, [FromBody] UpdateSkillDto dto)
+    public Task<IActionResult> UpdateSkill(int id, [FromBody] UpdateSkillDto dto)
+    {
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => UpdateSkillInternal(id, dto),
+            StringConstants.LOG_SKILL_UPDATED, id
+        );
+    }
+
+    private async Task<IActionResult> UpdateSkillInternal(int id, UpdateSkillDto dto)
     {
         if (id != dto.Id) return BadRequest(StringConstants.ID_MISMATCH);
 
@@ -102,12 +135,21 @@ public class SkillsController(AppDbContext db, ILogger<EmployeesController> logg
     /// <param name="id">The ID of the skill to delete.</param>
     /// <returns>NoContent if deleted, 404 if not found, 400 if deletion is blocked.</returns>
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteSkill(int id)
+    public Task<IActionResult> DeleteSkill(int id)
+    {
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => DeleteSkillInternal(id),
+            StringConstants.LOG_SKILL_DELETED, id
+        );
+    }
+
+    private async Task<IActionResult> DeleteSkillInternal(int id)
     {
         var existing = await FindSkillAsync(id);
         if (existing is null) return NotFound();
 
-        if (db.EmployeeSkills.Where(x => x.SkillId == id).Any())
+        if (db.EmployeeSkills.Any(x => x.SkillId == id))
             return BadRequest(StringConstants.FAIL_DELETE_SKILLS);
 
         try
@@ -118,7 +160,6 @@ public class SkillsController(AppDbContext db, ILogger<EmployeesController> logg
         }
         catch (DbUpdateException)
         {
-            // DB restrict constraint blocks deletion
             return BadRequest(StringConstants.FAIL_DELETE_SKILLS);
         }
     }
@@ -128,7 +169,16 @@ public class SkillsController(AppDbContext db, ILogger<EmployeesController> logg
     /// </summary>
     /// <returns>A CSV file containing all skill properties (excluding EmployeeSkills).</returns>
     [HttpGet("/export")]
-    public async Task<IActionResult> ExportSkillsToCsv()
+    public Task<IActionResult> ExportSkillsToCsv()
+    {
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            ExportSkillsToCsvInternal,
+            StringConstants.LOG_SKILLS_EXPORTED
+        );
+    }
+
+    private async Task<IActionResult> ExportSkillsToCsvInternal()
     {
         var skills = await db.Skills
             .AsNoTracking()
@@ -136,10 +186,7 @@ public class SkillsController(AppDbContext db, ILogger<EmployeesController> logg
             .Select(s => new SkillDto(s.Id, s.Name, s.Description, s.CreatedAt))
             .ToListAsync();
 
-        if (!skills.Any())
-        {
-            return NotFound(StringConstants.NO_SKILLS);
-        }
+        if (!skills.Any()) return NotFound(StringConstants.NO_SKILLS);
 
         var csvBuilder = new StringBuilder();
         var properties = typeof(SkillDto).GetProperties();
@@ -154,7 +201,6 @@ public class SkillsController(AppDbContext db, ILogger<EmployeesController> logg
                 val = val.Replace("\"", "\"\"");
                 return $"\"{val}\"";
             });
-
             csvBuilder.AppendLine(string.Join(",", values));
         }
 
