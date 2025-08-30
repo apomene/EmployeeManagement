@@ -31,5 +31,18 @@ namespace EmployeeManagement.Models
         public const string OK_DELETE_EMPLOYEES = "Employees deleted successfully."; 
         public const string NO_EMPLOYEES = "No Employees Found";
 
+        // Log Messages
+        public const string LOG_EMPLOYEE_CREATED = "Created employee {FirstName} {LastName}";
+        public const string LOG_EMPLOYEE_UPDATED = "Updated employee {EmployeeId}";
+        public const string LOG_EMPLOYEE_DELETED = "Deleted employee {EmployeeId}";
+        public const string LOG_EMPLOYEES_DELETED = "Deleted multiple employees";
+        public const string LOG_SKILL_ADDED = "Added skill {SkillId} to employee {EmployeeId}";
+        public const string LOG_SKILL_REMOVED = "Removed skill {SkillId} from employee {EmployeeId}";
+        public const string LOG_DEPARTMENTS_FETCHED = "Fetched departments";
+        public const string LOG_EMPLOYEE_SKILLS_FETCHED = "Fetched skills for employee {EmployeeId}";
+        public const string LOG_EMPLOYEE_FETCHED = "Fetched employee with ID {EmployeeId}";
+        public const string LOG_EMPLOYEES_FETCHED = "Fetched employees";
+        public const string ERROR_500 = "An error occurred while executing API action.";
+
     }
 }

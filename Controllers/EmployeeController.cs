@@ -47,7 +47,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
             return employees;
         },
-        "Fetched {Count} employees"
+       StringConstants.LOG_EMPLOYEES_FETCHED
     );
     }
 
@@ -62,7 +62,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return ActionWrapper.ExecuteAsync(
             logger,
             () => GetEmployeeInternal(id),
-            "Fetched employee with ID {id}", id
+            StringConstants.LOG_EMPLOYEE_FETCHED, id
         );
     }
 
@@ -98,7 +98,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
                var departments = await db.Departments.AsNoTracking().ToListAsync();
                return departments;
            },
-           "Fetched departments"
+           StringConstants.LOG_DEPARTMENTS_FETCHED
        );
 
     }
@@ -114,7 +114,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return ActionWrapper.ExecuteAsync(
             logger,
             () => GetEmployeeSkillsInternal(id),
-            "Fetched skills for employee {EmployeeId}", id
+            StringConstants.LOG_EMPLOYEE_SKILLS_FETCHED, id
         );
     }
 
@@ -139,7 +139,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return ActionWrapper.ExecuteAsync(
             logger,
             () => CreateEmployeeInternal(dto),
-            "Created employee {FirstName} {LastName}", dto.FirstName, dto.LastName
+            StringConstants.LOG_EMPLOYEE_CREATED, dto.FirstName, dto.LastName
         );
     }
 
@@ -207,7 +207,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return ActionWrapper.ExecuteAsync(
             logger,
             () => UpdateEmployeeInternal(id, dto),
-            "Updated employee {EmployeeId}", id
+            StringConstants.LOG_EMPLOYEE_UPDATED, id
         );
     }
 
@@ -258,7 +258,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return ActionWrapper.ExecuteAsync(
             logger,
             () => DeleteEmployeeInternal(id),
-            "Deleted employee {EmployeeId}", id
+            StringConstants.LOG_EMPLOYEE_DELETED, id
         );
     }
 
@@ -284,7 +284,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return ActionWrapper.ExecuteAsync(
             logger,
             () => DeleteEmployeesInternal(ids),
-            "Deleted multiple employees"
+            StringConstants.LOG_EMPLOYEES_DELETED
         );
     }
 
@@ -315,7 +315,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return ActionWrapper.ExecuteAsync(
             logger,
             () => AddSkillInternal(id, skillId),
-            "Added skill {SkillId} to employee {EmployeeId}", skillId, id
+            StringConstants.LOG_SKILL_ADDED, skillId, id
         );
     }
 
@@ -354,7 +354,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return ActionWrapper.ExecuteAsync(
             logger,
             () => RemoveSkillInternal(id, skillId),
-            "Removed skill {SkillId} from employee {EmployeeId}", skillId, id
+            StringConstants.LOG_SKILL_REMOVED, skillId, id
         );
     }
 

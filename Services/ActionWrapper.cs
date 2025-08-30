@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EmployeeManagement.Models;
+using Microsoft.AspNetCore.Mvc;
 
 public static class ActionWrapper
 {
@@ -27,17 +28,17 @@ public static class ActionWrapper
                 logger.LogInformation(successMessage, successParams);
             }
 
-            return result; // Automatically wrapped in 200 OK
+            return result;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while executing API action.");
+            logger.LogError(ex, StringConstants.ERROR_500);
             return new StatusCodeResult(500);
         }
     }
 
     /// <summary>
-    /// Variant for actions that return only IActionResult (no payload)
+    /// Variant for actions that return only IActionResult
     /// </summary>
     public static async Task<IActionResult> ExecuteAsync(
         ILogger logger,
@@ -58,7 +59,7 @@ public static class ActionWrapper
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while executing API action.");
+            logger.LogError(ex, StringConstants.ERROR_500);
             return new StatusCodeResult(500);
         }
     }
