@@ -258,9 +258,16 @@ namespace EmployeeManagement.Tests
             _dbContext.Employees.Add(emp);
             await _dbContext.SaveChangesAsync();
 
-            var result = await _controller.GetEmployee(emp.Id);
-            var employee = (result.Result as OkObjectResult)?.Value as EmployeeDto;
+            // Act
+            var actionResult = await _controller.GetEmployee(emp.Id);
 
+            // Assert
+            Assert.That(actionResult, Is.InstanceOf<OkObjectResult>());
+
+            var okResult = actionResult as OkObjectResult;
+            Assert.That(okResult, Is.Not.Null);
+
+            var employee = okResult!.Value as EmployeeDto;
             Assert.That(employee, Is.Not.Null);
             Assert.That(employee!.FirstName, Is.EqualTo("Charlie"));
         }

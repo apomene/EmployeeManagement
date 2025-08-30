@@ -13,9 +13,7 @@ using Microsoft.EntityFrameworkCore;
 [Route("api/[controller]")]
 public class EmployeesController(AppDbContext db, ILogger<EmployeesController> logger) : ControllerBase
 {
-    private readonly ILogger<EmployeesController> _logger;
-
-   
+     
     /// <summary>
     /// Gets all employees with optional filtering.
     /// </summary>
@@ -59,7 +57,16 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     /// <param name="id">Employee Id.</param>
     /// <returns>Employee details.</returns>
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<EmployeeDto>> GetEmployee(int id)
+    public Task<IActionResult> GetEmployee(int id)
+    {
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => GetEmployeeInternal(id),
+            "Fetched employee with ID {id}", id
+        );
+    }
+
+    private async Task<IActionResult> GetEmployeeInternal(int id)
     {
         var employee = await GetEmployeeById(id);
 
@@ -77,34 +84,23 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         return Ok(dto);
     }
-
-    private async Task<ActionResult<EmployeeDto>> GetEmployeeDto(int id)
-    {
-        var employee = await GetEmployeeById(id);
-
-        if (employee == null) return NotFound();
-
-        var dto = new EmployeeDto(
-            employee.Id,
-            employee.FirstName,
-            employee.LastName,
-            employee.HireDate,
-            employee.Email,
-            employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
-            employee.DepartmentId
-        );
-
-        return Ok(dto);
-    }
+    
     /// <summary>
     /// Gets all departments.
     /// </summary>
     /// <returns>List of departments.</returns>
     [HttpGet("departments")]
-    public async Task<ActionResult<List<Department>>> GetDepartments()
+    public Task<ActionResult<IEnumerable<Department>>> GetDepartments()
     {
-        var departments = await db.Departments.AsNoTracking().ToListAsync();
-        return Ok(departments);
+        return ActionWrapper.ExecuteAsync<IEnumerable<Department>>(
+           logger,
+           async () => {
+               var departments = await db.Departments.AsNoTracking().ToListAsync();
+               return departments;
+           },
+           "Fetched departments"
+       );
+
     }
 
     /// <summary>
@@ -206,14 +202,22 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     /// <param name="dto">Updated employee data.</param>
     /// <returns>No content if successful.</returns>
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> UpdateEmployee(int id, UpdateEmployeeDto dto)
+    public Task<IActionResult> UpdateEmployee(int id, UpdateEmployeeDto dto)
+    {
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => UpdateEmployeeInternal(id, dto),
+            "Updated employee {EmployeeId}", id
+        );
+    }
+
+    private async Task<IActionResult> UpdateEmployeeInternal(int id, UpdateEmployeeDto dto)
     {
         var employee = await GetEmployeeById(id);
         if (employee == null) return NotFound();
 
         var department = await db.Departments.FindAsync(dto.DepartmentId);
-        if (department == null)
-            return BadRequest(StringConstants.INVALID_DEPARTMENT);
+        if (department == null) return BadRequest(StringConstants.INVALID_DEPARTMENT);
 
         employee.FirstName = dto.FirstName;
         employee.LastName = dto.LastName;
@@ -242,13 +246,23 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return NoContent();
     }
 
+
     /// <summary>
     /// Deletes an employee by Id.
     /// </summary>
     /// <param name="id">Employee Id.</param>
     /// <returns>No content if successful.</returns>
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteEmployee(int id)
+    public Task<IActionResult> DeleteEmployee(int id)
+    {
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => DeleteEmployeeInternal(id),
+            "Deleted employee {EmployeeId}", id
+        );
+    }
+
+    private async Task<IActionResult> DeleteEmployeeInternal(int id)
     {
         var employee = await db.Employees.FindAsync(id);
         if (employee == null) return NotFound();
@@ -258,13 +272,23 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return NoContent();
     }
 
+
     /// <summary>
     /// Deletes multiple employees.
     /// </summary>
     /// <param name="ids">List of employee Ids.</param>
     /// <returns>No content if successful.</returns>
     [HttpDelete]
-    public async Task<IActionResult> DeleteEmployees([FromBody] List<int> ids)
+    public Task<IActionResult> DeleteEmployees([FromBody] List<int> ids)
+    {
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => DeleteEmployeesInternal(ids),
+            "Deleted multiple employees"
+        );
+    }
+
+    private async Task<IActionResult> DeleteEmployeesInternal(List<int> ids)
     {
         if (ids == null || !ids.Any())
             return BadRequest(StringConstants.NO_EMPLOYEE_ID);
@@ -278,15 +302,24 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         db.Employees.RemoveRange(employees);
         await db.SaveChangesAsync();
-
         return NoContent();
     }
+
 
     /// <summary>
     /// Adds a skill to an employee.
     /// </summary>
     [HttpPost("{id:int}/skills/{skillId:int}")]
-    public async Task<IActionResult> AddSkill(int id, int skillId)
+    public Task<IActionResult> AddSkill(int id, int skillId)
+    {
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => AddSkillInternal(id, skillId),
+            "Added skill {SkillId} to employee {EmployeeId}", skillId, id
+        );
+    }
+
+    private async Task<IActionResult> AddSkillInternal(int id, int skillId)
     {
         var employee = await db.Employees
             .Include(e => e.EmployeeSkills)
@@ -311,11 +344,21 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return NoContent();
     }
 
+
     /// <summary>
     /// Removes a skill from an employee.
     /// </summary>
     [HttpDelete("{id:int}/skills/{skillId:int}")]
-    public async Task<IActionResult> RemoveSkill(int id, int skillId)
+    public Task<IActionResult> RemoveSkill(int id, int skillId)
+    {
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => RemoveSkillInternal(id, skillId),
+            "Removed skill {SkillId} from employee {EmployeeId}", skillId, id
+        );
+    }
+
+    private async Task<IActionResult> RemoveSkillInternal(int id, int skillId)
     {
         var employeeSkill = await db.EmployeeSkills
             .FirstOrDefaultAsync(es => es.EmployeeId == id && es.SkillId == skillId);
@@ -326,6 +369,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         await db.SaveChangesAsync();
         return NoContent();
     }
+
 
     // Private helper to get employee with skills and department
     private async Task<Employee?> GetEmployeeById(int id) =>
