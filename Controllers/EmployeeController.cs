@@ -1,6 +1,8 @@
-﻿using EmployeeManagement.Data;
+﻿using EmployeeManagement.API.Services;
+using EmployeeManagement.Data;
 using EmployeeManagement.Models;
 using EmployeeManagement.Services;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,8 +11,11 @@ using Microsoft.EntityFrameworkCore;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class EmployeesController(AppDbContext db) : ControllerBase
+public class EmployeesController(AppDbContext db, ILogger<EmployeesController> logger) : ControllerBase
 {
+    private readonly ILogger<EmployeesController> _logger;
+
+   
     /// <summary>
     /// Gets all employees with optional filtering.
     /// </summary>
@@ -19,25 +24,33 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetEmployees([FromQuery] FilterCollection filter)
     {
-        var query = db.Employees
-            .Include(e => e.EmployeeSkills)
-            .ThenInclude(es => es.Skill)
-            .AsNoTracking();
+        return await ActionWrapper.ExecuteAsync<IEnumerable<EmployeeDto>>(
+        logger,
+        async () =>
+        {
+            var query = db.Employees
+                .Include(e => e.EmployeeSkills)
+                .ThenInclude(es => es.Skill)
+                .AsNoTracking();
 
-        query = filter.ApplyAll(query);
+            query = filter.ApplyAll(query);
 
-        var employees = await query
-            .Select(e => new EmployeeDto(
-                e.Id,
-                e.FirstName,
-                e.LastName,
-                e.HireDate,
-                e.Email,
-                e.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
-                e.DepartmentId
-            )).ToListAsync();
+            var employees = await query
+                .Select(e => new EmployeeDto(
+                    e.Id,
+                    e.FirstName,
+                    e.LastName,
+                    e.HireDate,
+                    e.Email,
+                    e.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
+                    e.DepartmentId
+                ))
+                .ToListAsync();
 
-        return Ok(employees);
+            return employees;
+        },
+        "Fetched {Count} employees"
+    );
     }
 
     /// <summary>
@@ -65,6 +78,24 @@ public class EmployeesController(AppDbContext db) : ControllerBase
         return Ok(dto);
     }
 
+    private async Task<ActionResult<EmployeeDto>> GetEmployeeDto(int id)
+    {
+        var employee = await GetEmployeeById(id);
+
+        if (employee == null) return NotFound();
+
+        var dto = new EmployeeDto(
+            employee.Id,
+            employee.FirstName,
+            employee.LastName,
+            employee.HireDate,
+            employee.Email,
+            employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
+            employee.DepartmentId
+        );
+
+        return Ok(dto);
+    }
     /// <summary>
     /// Gets all departments.
     /// </summary>
@@ -82,15 +113,24 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     /// <param name="id">Employee Id.</param>
     /// <returns>List of EmployeeSkills.</returns>
     [HttpGet("{id:int}/skills")]
-    public async Task<ActionResult<List<EmployeeSkill>>> GetEmployeeSkills(int id)
+    public Task<ActionResult<List<EmployeeSkill>>> GetEmployeeSkills(int id)
     {
-        var employeeSkills = await db.EmployeeSkills
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => GetEmployeeSkillsInternal(id),
+            "Fetched skills for employee {EmployeeId}", id
+        );
+    }
+
+    private async Task <List<EmployeeSkill>> GetEmployeeSkillsInternal(int id)
+    {
+        var employeeSkills = db.EmployeeSkills
             .Where(emp => emp.EmployeeId == id)
             .AsNoTracking()
             .ToListAsync();
-
-        return Ok(employeeSkills);
+        return await employeeSkills;
     }
+
 
     /// <summary>
     /// Creates a new employee.
@@ -98,7 +138,20 @@ public class EmployeesController(AppDbContext db) : ControllerBase
     /// <param name="dto">Employee data.</param>
     /// <returns>Created employee.</returns>
     [HttpPost]
-    public async Task<ActionResult<EmployeeDto>> CreateEmployee(CreateEmployeeDto dto)
+    public Task<IActionResult> CreateEmployee(CreateEmployeeDto dto)
+    {
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => CreateEmployeeInternal(dto),
+            "Created employee {FirstName} {LastName}", dto.FirstName, dto.LastName
+        );
+    }
+
+    /// <summary>
+    /// Internal method to handle employee creation logic.
+    /// Returns EmployeeDto.
+    /// </summary>
+    private async Task<IActionResult> CreateEmployeeInternal(CreateEmployeeDto dto)
     {
         var department = await db.Departments.FindAsync(dto.DepartmentId);
         if (department == null)
@@ -119,6 +172,7 @@ public class EmployeesController(AppDbContext db) : ControllerBase
             {
                 var skill = await db.Skills.FirstOrDefaultAsync(s => s.Name == skillName)
                             ?? new Skill { Name = skillName };
+
                 employee.EmployeeSkills.Add(new EmployeeSkill
                 {
                     Employee = employee,
@@ -140,8 +194,10 @@ public class EmployeesController(AppDbContext db) : ControllerBase
             employee.DepartmentId
         );
 
-        return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, resultDto);
+        return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, resultDto); 
     }
+
+
 
     /// <summary>
     /// Updates an existing employee.

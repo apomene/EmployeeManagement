@@ -2,8 +2,13 @@ using EmployeeManagement.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using NLog.Web;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Replace default logger with NLog
+builder.Logging.ClearProviders();
+builder.Host.UseNLog();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -33,6 +38,12 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
 });
 var app = builder.Build();
+app.Use(async (context, next) =>
+{
+    context.Items["traceId"] = context.TraceIdentifier;
+    await next.Invoke();
+});
+
 
 app.UseSwagger();
 

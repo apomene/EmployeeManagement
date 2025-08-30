@@ -3,6 +3,7 @@ using EmployeeManagement.Data;
 using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Text;
 
 
@@ -16,12 +17,13 @@ namespace EmployeeManagement.Tests
 
         private AppDbContext _dbContext = null!;
         private SkillsController _controller = null!;
+        private readonly NullLogger<EmployeesController> _logger = NullLogger<EmployeesController>.Instance;
 
         [SetUp]
         public void Setup()
         {
             _dbContext = CreateDbContextWithSeed();
-            _controller = new SkillsController(_dbContext);
+            _controller = new SkillsController(_dbContext, _logger);
         }
 
         [TearDown]

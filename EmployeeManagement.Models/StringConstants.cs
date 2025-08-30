@@ -28,7 +28,8 @@ namespace EmployeeManagement.Models
         public const string INVALID_EMPLOYEE = "Invalid employee Id";
         public const string DEPARTMENTS = "departments";
         public const string FAIL_DELETE_EMPLOYEES = "Failed to delete employees.";
-        public const string OK_DELETE_EMPLOYEES = "Employees deleted successfully.";
+        public const string OK_DELETE_EMPLOYEES = "Employees deleted successfully."; 
+        public const string NO_EMPLOYEES = "No Employees Found";
 
     }
 }

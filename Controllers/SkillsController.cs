@@ -13,7 +13,7 @@ namespace EmployeeManagement.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class SkillsController(AppDbContext db) : ControllerBase
+public class SkillsController(AppDbContext db, ILogger<EmployeesController> logger) : ControllerBase
 {
     /// <summary>
     /// Retrieves all skills.

@@ -2,8 +2,17 @@
 
 <h2 class="mb-4">Employees</h2>
 
+@if (TempData["ImportResult"] != null)
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        @TempData["ImportResult"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+
 <div class="row mb-3">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <form id="employeeIndexForm" asp-action="Index" method="get" class="d-flex">
             <input type="text" name="search"
                    id="searchInput"
@@ -13,9 +22,18 @@
             <input type="hidden" name="sortBy" id="sortBy" value="@ViewData["CurrentSort"]" />
         </form>
     </div>
-    <div class="col-md-6 text-end">
+   
+    <div class="col-md-4 text-end">
         <a asp-action="Create" class="btn btn-success">+ Create New Employee</a>
     </div>
+    <div class="col-md-4 text-end">
+        <form asp-controller="EmployeeImport" asp-action="Import" method="post">
+            <button type="submit" class="btn btn-success mb-3">Import Employees</button>
+        </form>
+    </div>
+ 
+   
+
 </div>
 
 
