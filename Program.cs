@@ -1,6 +1,7 @@
 using EmployeeManagement.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,10 +23,19 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString));
 
+builder.Services.AddSwaggerGen(c =>
+{
+    // Get XML documentation path
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
+    // Include XML comments
+    c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+});
 var app = builder.Build();
 
 app.UseSwagger();
+
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Employee API V1.0"); // doc name is v1
