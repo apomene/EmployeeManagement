@@ -21,7 +21,6 @@ builder.Services.AddSwaggerGen(c =>
 
 
 
-
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // Add SQLite database
