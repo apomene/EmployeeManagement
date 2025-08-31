@@ -2,7 +2,6 @@
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
 using EmployeeManagement.Services;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class EmployeesController(AppDbContext db, ILogger<EmployeesController> logger) : ControllerBase
+public class EmployeesController(AppDbContext db, ILogger<EmployeesController> logger, IAuditLogger auditLogger) : ControllerBase
 {
      
     /// <summary>
@@ -178,6 +177,14 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         }
 
         db.Employees.Add(employee);
+        _ = auditLogger.LogChangeAsync(
+           entityName: "Employee",
+           entityId: dto.Email,
+           action: "Create",
+           newValue: dto,
+           performedBy: "system"  /// TO DO: Replace with actual user/scheduler info if we implement authentication
+       );
+
         await db.SaveChangesAsync();
 
         var resultDto = new EmployeeDto(

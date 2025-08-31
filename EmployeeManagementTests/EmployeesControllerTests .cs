@@ -1,4 +1,5 @@
 ﻿
+using EmployeeManagement.API.Services;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
 using EmployeeManagement.Services;
@@ -6,6 +7,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Mongo2Go;
+using MongoDB.Driver;
 
 namespace EmployeeManagement.Tests
 {
@@ -14,17 +17,35 @@ namespace EmployeeManagement.Tests
     {
         private EmployeesController _controller;
         private AppDbContext _dbContext;
+        private MongoDbRunner _mongoRunner;
+        private IAuditLogger _auditLogger;
         private readonly NullLogger<EmployeesController> _logger = NullLogger<EmployeesController>.Instance;
 
         [SetUp]
         public void Setup()
         {
+            // Start temporary MongoDB
+            _mongoRunner = MongoDbRunner.Start();
+
+            var client = new MongoClient(_mongoRunner.ConnectionString);
+            var database = client.GetDatabase("EmployeeAuditTestDb");
+
+            // use real AuditLogger
+            _auditLogger = new AuditLogger(database, NullLogger<AuditLogger>.Instance);
+
             _dbContext = CreateInMemoryDbContext();
-            _controller = new EmployeesController(_dbContext, _logger);
+            _controller = new EmployeesController(_dbContext, _logger, _auditLogger);
         }
 
+
+
         [TearDown]
-        public void TearDown() => _dbContext.Dispose();
+        public void TearDown() 
+        {
+            _dbContext.Dispose();
+            _mongoRunner?.Dispose();
+        }
+        
 
         private static AppDbContext CreateInMemoryDbContext()
         {
@@ -161,7 +182,7 @@ namespace EmployeeManagement.Tests
         {
 
             var db = await SeedTestData();
-            var controller = new EmployeesController(db, _logger);
+            var controller = new EmployeesController(db, _logger, _auditLogger);
 
             var filter = new FilterCollection
             {
@@ -187,7 +208,7 @@ namespace EmployeeManagement.Tests
         {
             // Arrange
             var db = await SeedTestData();
-            var controller = new EmployeesController(db, _logger);
+            var controller = new EmployeesController(db, _logger, _auditLogger);
 
             var filter = new FilterCollection(); // no search/order
 
@@ -308,7 +329,7 @@ namespace EmployeeManagement.Tests
         {
             // Arrange
             var db = await SeedTestData();
-            var controller = new EmployeesController(db, _logger);
+            var controller = new EmployeesController(db, _logger, _auditLogger);
             var dto = new UpdateEmployeeDto("John", "Doe", "john@example.com", DateTime.UtcNow, new List<string> { "Angular", "MongoDB" },1);
 
             var result = await controller.UpdateEmployee(4, dto);
@@ -396,7 +417,7 @@ namespace EmployeeManagement.Tests
             var db = await SeedTestData();
             var dto = new AddSkillDto("Java");
             db.Skills.Add(new Skill { Id = 1, Name = "Java" });
-            var controller = new EmployeesController(db, _logger);
+            var controller = new EmployeesController(db, _logger, _auditLogger);
 
             var employee = await db.Employees
                 .Include(e => e.EmployeeSkills)
@@ -436,7 +457,7 @@ namespace EmployeeManagement.Tests
         {
 
             var db = await SeedTestData();
-            var controller = new EmployeesController(db, _logger);
+            var controller = new EmployeesController(db, _logger, _auditLogger);
             var idsToDelete = new List<int> { 1, 2 };
 
 
@@ -455,7 +476,7 @@ namespace EmployeeManagement.Tests
         {
 
             var db = await SeedTestData();
-            var controller = new EmployeesController(db, _logger);
+            var controller = new EmployeesController(db, _logger, _auditLogger);
 
 
             var result = await controller.DeleteEmployees(new List<int>());
@@ -470,7 +491,7 @@ namespace EmployeeManagement.Tests
         public async Task DeleteEmployees_WithNonExistingIds_ReturnsNotFound()
         {
             var db = await SeedTestData();
-            var controller = new EmployeesController(db, _logger);
+            var controller = new EmployeesController(db, _logger, _auditLogger);
 
             var result = await controller.DeleteEmployees(new List<int> { 99, 100 });
 
@@ -509,6 +530,42 @@ namespace EmployeeManagement.Tests
             Assert.That(skills, Is.Not.Null);
             Assert.That(skills.Count, Is.EqualTo(0));
         }
+
+        [Test]
+        public async Task CreateEmployee_Should_Write_AuditLog()
+        {
+            // Arrange
+
+            _dbContext.Departments.AddRange(new Department
+            {
+                Id = 1,
+                Name = "IT",
+                Description = "The Information Technology department"
+            });
+
+            var dto = new CreateEmployeeDto(
+                "John",
+                "Doe",
+                DateTime.UtcNow,
+                "john.doe@yahoo.com",
+                new List<string> { "C#" },
+                1
+            );
+
+            var result = await _controller.CreateEmployee(dto);
+
+
+            // Assert
+            var client = new MongoClient(_mongoRunner.ConnectionString);
+            var db = client.GetDatabase("EmployeeAuditTestDb");
+            var logs = await db.GetCollection<AuditLogEntry>("AuditLogs")
+                               .Find(Builders<AuditLogEntry>.Filter.Empty)
+                               .ToListAsync();
+
+            Assert.That(logs, Is.Not.Empty);
+            Assert.That(logs.First().Action, Is.EqualTo("Create"));
+        }
+
     }
 
 }

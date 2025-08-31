@@ -1,8 +1,10 @@
+using EmployeeManagement.API.Services;
 using EmployeeManagement.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
+using MongoDB.Driver;
 using NLog.Web;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +38,22 @@ builder.Services.AddSwaggerGen(c =>
     // Include XML comments
     c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
 });
+
+builder.Services.AddSingleton<IMongoClient>(sp =>
+{
+    var settings = MongoClientSettings.FromConnectionString(
+        builder.Configuration.GetConnectionString("MongoDb"));
+    return new MongoClient(settings);
+});
+
+builder.Services.AddScoped<IMongoDatabase>(sp =>
+{
+    var client = sp.GetRequiredService<IMongoClient>();
+    return client.GetDatabase(builder.Configuration.GetValue<string>("MongoDBName"));
+});
+
+builder.Services.AddScoped<IAuditLogger, AuditLogger>();
+
 var app = builder.Build();
 app.Use(async (context, next) =>
 {
