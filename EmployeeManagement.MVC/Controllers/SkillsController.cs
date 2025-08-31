@@ -1,5 +1,6 @@
 using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http.Json;
 
@@ -41,7 +42,16 @@ namespace EmployeeManagement.Controllers
             if (response.IsSuccessStatusCode)
                 return RedirectToAction(nameof(Index));
 
-            ModelState.AddModelError("", StringConstants.ERROR_DELETE_SKILL);
+            if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                errorMessage = string.IsNullOrWhiteSpace(errorMessage)
+                    ? StringConstants.ERROR_CREATE_SKILL
+                    : errorMessage;
+
+                ModelState.AddModelError("", errorMessage);              
+            }
+            
             return View(skill);
         }
 
@@ -97,13 +107,12 @@ namespace EmployeeManagement.Controllers
 
         [HttpGet]
         public async Task<IActionResult> ExportSkills()
-        {
-            // Call API
+        {            
             var response = await _http.GetAsync("/export");
 
             if (!response.IsSuccessStatusCode)
             {
-                TempData["Error"] = "Failed to export skills.";
+                TempData["Error"] = StringConstants.FAIL_EXPORT_SKILLS;
                 return RedirectToAction("Index");
             }
 

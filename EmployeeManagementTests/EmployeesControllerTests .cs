@@ -150,7 +150,7 @@ namespace EmployeeManagement.Tests
                 
 
         [Test]
-        //[TestCase("FirstName", "John", "HireDate", "desc", 0, "")]
+        [TestCase("FirstName", "John", "HireDate", "desc", 0, "")]
         [TestCase("FirstName", "Alice", "HireDate", "desc", 1, "Alice")]
         [TestCase("FirstName", "Alice", "LastName", "asc", 1, "Alice")]
         [TestCase("FirstName", "Alice", "FirstName", "asc", 1, "Alice")]

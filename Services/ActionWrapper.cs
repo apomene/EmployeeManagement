@@ -1,18 +1,21 @@
 ﻿using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+
+public class BadRequestException : Exception
+{
+    public BadRequestException(string message) : base(message) { }
+}
 
 public static class ActionWrapper
 {
     /// <summary>
     /// Executes an async action with centralized try/catch and logging.
-    /// Returns 200 OK with result on success, or 500 Internal Server Error on exception.
+    /// Returns 200 OK with result on success,
+    /// 400 Bad Request if validation/business exception occurs,
+    /// or 500 Internal Server Error on unexpected exception.
     /// </summary>
     /// <typeparam name="T">Type of the result returned by the action.</typeparam>
-    /// <param name="logger">Logger for info and error messages.</param>
-    /// <param name="action">Async function that returns T.</param>
-    /// <param name="successMessage">Optional info message template for logging.</param>
-    /// <param name="successParams">Optional parameters for info logging.</param>
-    /// <returns>ActionResult wrapping the result or a 500 error.</returns>
     public static async Task<ActionResult<T>> ExecuteAsync<T>(
         ILogger logger,
         Func<Task<T>> action,
@@ -23,16 +26,38 @@ public static class ActionWrapper
         {
             T result = await action();
 
+            if ( result is ObjectResult)
+            {
+                var objResult = result as ObjectResult;
+                if (objResult.StatusCode >= 200 && objResult.StatusCode < 300)
+                {
+                    if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        logger.LogInformation(successMessage, successParams);
+                    }
+                }
+                else if (objResult.StatusCode >= 400 && objResult.StatusCode < 500)
+                {
+
+                    logger.LogWarning("Bad request: {Message}", objResult.Value);
+                }
+                return result;
+            }
+
             if (!string.IsNullOrEmpty(successMessage))
             {
                 logger.LogInformation(successMessage, successParams);
             }
-
             return result;
+        }
+        catch (BadRequestException brex)
+        {
+            logger.LogWarning(brex, "Bad request: {Message}", brex.Message);
+            return new BadRequestObjectResult(new { error = brex.Message });
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, StringConstants.ERROR_500);
+            logger.LogError(ex, StringConstants.ERROR_500,ex.Message);
             return new StatusCodeResult(500);
         }
     }
@@ -50,16 +75,33 @@ public static class ActionWrapper
         {
             var result = await action();
 
+            if (result is ObjectResult)
+            {
+                var objResult = result as ObjectResult;
+                if (objResult.StatusCode >= 200 && objResult.StatusCode < 300)
+                {
+                    if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        logger.LogInformation(successMessage, successParams);
+                    }
+                }
+                else if (objResult.StatusCode >= 400 && objResult.StatusCode < 500)
+                {
+
+                    logger.LogWarning("Bad request: {Message}", objResult.Value);
+                }
+                return result;
+            }
+
             if (!string.IsNullOrEmpty(successMessage))
             {
                 logger.LogInformation(successMessage, successParams);
             }
-
             return result;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, StringConstants.ERROR_500);
+            logger.LogError(ex, StringConstants.ERROR_500, ex.Message);
             return new StatusCodeResult(500);
         }
     }

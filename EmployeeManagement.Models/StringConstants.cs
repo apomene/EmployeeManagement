@@ -16,6 +16,7 @@ namespace EmployeeManagement.Models
         public const string UNEXPTECTED_ERROR = "An unexpected error occurred while adding the skill.";
         public const string FAIL_DELETE_SKILLS = "Cannot delete skill because it is assigned to one or more employees.";
         public const string NO_SKILLS = "No Skills Found";
+        public const string FAIL_EXPORT_SKILLS = "Failed to export skills.";
 
         // Employees
         public const string EMPLOYEES = "employees";
@@ -32,7 +33,7 @@ namespace EmployeeManagement.Models
         public const string NO_EMPLOYEES = "No Employees Found";
 
         // Log Messages
-        public const string ERROR_500 = "An error occurred while executing API action.";
+        public const string ERROR_500 = "An error occurred while executing API action: {error}";
 
         //Employees Controller
         public const string LOG_EMPLOYEE_CREATED = "Created employee {FirstName} {LastName}";
