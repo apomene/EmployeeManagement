@@ -4,6 +4,7 @@ using EmployeeManagement.Models;
 using EmployeeManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static MongoDB.Driver.WriteConcern;
 
 /// <summary>
 /// Controller for managing Employees and their Skills.
@@ -181,7 +182,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
            entityName: "Employee",
            entityId: dto.Email,
            action: "Create",
-           newValue: dto,
+           newValue:dto,
            performedBy: "system"  /// TO DO: Replace with actual user/scheduler info if we implement authentication
        );
 

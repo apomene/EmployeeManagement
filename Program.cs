@@ -39,6 +39,9 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
 });
 
+
+/* // Add MongoDB services - commented out if not using MongoDB
+
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
     var settings = MongoClientSettings.FromConnectionString(
@@ -53,6 +56,10 @@ builder.Services.AddScoped<IMongoDatabase>(sp =>
 });
 
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
+
+*/
+
+
 
 var app = builder.Build();
 app.Use(async (context, next) =>

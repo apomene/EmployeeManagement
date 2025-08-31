@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Mongo2Go;
 using MongoDB.Driver;
+using System.Diagnostics;
 
 namespace EmployeeManagement.Tests
 {
@@ -534,14 +535,14 @@ namespace EmployeeManagement.Tests
         [Test]
         public async Task CreateEmployee_Should_Write_AuditLog()
         {
-            // Arrange
-
-            _dbContext.Departments.AddRange(new Department
+            // Arrange: create department
+            _dbContext.Departments.Add(new Department
             {
                 Id = 1,
                 Name = "IT",
                 Description = "The Information Technology department"
             });
+            await _dbContext.SaveChangesAsync();
 
             var dto = new CreateEmployeeDto(
                 "John",
@@ -552,19 +553,34 @@ namespace EmployeeManagement.Tests
                 1
             );
 
+            // Act: call API (fire-and-forget logging)
             var result = await _controller.CreateEmployee(dto);
 
-
-            // Assert
+            // Assert: wait for audit log to appear in MongoDB
             var client = new MongoClient(_mongoRunner.ConnectionString);
             var db = client.GetDatabase("EmployeeAuditTestDb");
-            var logs = await db.GetCollection<AuditLogEntry>("AuditLogs")
-                               .Find(Builders<AuditLogEntry>.Filter.Empty)
-                               .ToListAsync();
+            var collection = db.GetCollection<AuditLogEntry>("AuditLogs");
 
-            Assert.That(logs, Is.Not.Empty);
-            Assert.That(logs.First().Action, Is.EqualTo("Create"));
+            AuditLogEntry? log = null;
+            var timeout = TimeSpan.FromSeconds(5); // maximum wait
+            var sw = Stopwatch.StartNew();
+
+            while (sw.Elapsed < timeout)
+            {
+                log = await collection.Find(FilterDefinition<AuditLogEntry>.Empty)
+                                      .FirstOrDefaultAsync();
+                if (log != null)
+                    break;
+
+                await Task.Delay(50); // small delay to avoid busy-wait
+            }
+
+            Assert.That(log, Is.Not.Null, "Audit log was not written in time.");
+            Assert.That(log!.Action, Is.EqualTo("Create"));
+            Assert.That(log.EntityName, Is.EqualTo("Employee"));
+            Assert.That(log.EntityId, Is.EqualTo(dto.Email));
         }
+
 
     }
 
