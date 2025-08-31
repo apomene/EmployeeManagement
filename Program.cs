@@ -1,8 +1,6 @@
-using EmployeeManagement.API.Services;
 using EmployeeManagement.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using MongoDB.Driver;
 using NLog.Web;
 using System.Reflection;
 
@@ -87,4 +85,19 @@ app.MapStaticAssets();
 
 app.MapControllers();
 
-app.Run();
+try
+{
+
+    app.Run();
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "Application stopped because of exception");
+    throw;
+}
+finally
+{
+    NLog.LogManager.Shutdown();
+}
+
