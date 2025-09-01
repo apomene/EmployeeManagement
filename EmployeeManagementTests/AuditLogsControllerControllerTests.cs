@@ -60,7 +60,6 @@ namespace EmployeeManagement.Tests
                 1
             );
 
-            // Arrange
             var dto2 = new EmployeeDto(
                  2,
                 "Apo",
@@ -89,6 +88,34 @@ namespace EmployeeManagement.Tests
             Assert.That(logs[1].EntityId == "emp1", Is.True);
             Assert.That(logs[1].NewValue.Email == dto.Email, Is.True);
 
+        }
+
+        [Test]
+        public async Task GetLogsByEmployeeAsync_ShouldReturnOnlyEmployeeLogs()
+        {
+            // Arrange
+           
+            var dto2 = new EmployeeDto(
+                 2,
+                "Apo",
+                "Mene",
+                DateTime.UtcNow,
+                "apo.mene@yahoo.com",
+                new List<string> { "C#" },
+                1
+            );
+
+            await _auditLogger.LogChangeAsync("Employee", dto2.Email, "Create", dto2, "test-user");
+            await _auditLogger.LogChangeAsync("Employee", dto2.Email, "Update", dto2, "test-user");
+
+            // Act
+            var result = await _auditLogger.GetLogsByEmployeeAsync("apo.mene@yahoo.com");
+
+            // Assert
+            Assert.That(result.Count, Is.EqualTo(2));
+            Assert.That(result.All(l => l.EntityName == "Employee"), Is.True);
+            Assert.That(result.First().Action, Is.EqualTo("Update")); // Should be sorted descending by Timestamp
+            Assert.That(result.Last().Action, Is.EqualTo("Create"));
         }
 
     }
