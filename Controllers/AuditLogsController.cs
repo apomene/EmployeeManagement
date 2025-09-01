@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using EmployeeManagement.API.Services;
+using EmployeeManagement.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 
@@ -8,15 +10,15 @@ namespace EmployeeManagement.API.Controllers
     [Route("api/[controller]")]
     public class AuditLogsController : ControllerBase
     {
-        private readonly AuditLogger _auditLogger;
+        private readonly IAuditLogger _auditLogger;
 
-        public AuditLogsController(AuditLogger auditLogger)
+        public AuditLogsController(IAuditLogger auditLogger)
         {
             _auditLogger = auditLogger;
         }
 
-        [HttpGet("employee/{email}")]
-        public async Task<ActionResult<List<BsonDocument>>> GetEmployeeLogs(string email)
+        [HttpGet("{email}")]
+        public async Task<ActionResult<List<AuditLogEntry>>> GetEmployeeLogs(string email)
         {
             var logs = await _auditLogger.GetLogsByEmployeeAsync(email);
 

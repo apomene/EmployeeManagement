@@ -1,6 +1,5 @@
 ﻿
 using EmployeeManagement.API.Controllers;
-using EmployeeManagement.API.Data;
 using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

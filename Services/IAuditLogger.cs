@@ -1,5 +1,4 @@
-﻿using EmployeeManagement.API.Data;
-using EmployeeManagement.Models;
+﻿using EmployeeManagement.Models;
 
 namespace EmployeeManagement.API.Services
 {

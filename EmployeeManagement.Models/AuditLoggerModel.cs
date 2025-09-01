@@ -2,7 +2,7 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace EmployeeManagement.API.Data
+namespace EmployeeManagement.Models
 {
 
     public class AuditLogEntry

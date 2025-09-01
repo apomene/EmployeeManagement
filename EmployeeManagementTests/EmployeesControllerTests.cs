@@ -1,5 +1,4 @@
 ﻿
-using EmployeeManagement.API.Data;
 using EmployeeManagement.API.Services;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;

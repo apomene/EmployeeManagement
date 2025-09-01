@@ -1,0 +1,35 @@
+﻿@model List<EmployeeManagement.Models.AuditLogEntry>
+
+@{
+    ViewData["Title"] = "Employee Audit Logs";
+}
+
+<h2>Audit Logs for Employee</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Entity</th>
+            <th>Entity Id</th>
+            <th>Performed By</th>
+            <th>Timestamp</th>
+            <th>Old Value</th>
+            <th>New Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var log in Model)
+        {
+            <tr>
+                <td>@log.Action</td>
+                <td>@log.EntityName</td>
+                <td>@log.EntityId</td>
+                <td>@log.PerformedBy</td>
+                <td>@log.Timestamp.ToString("u")</td>
+                <td>@(log.OldValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(log.OldValue) : "-")</td>
+                <td>@(log.NewValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(log.NewValue) : "-")</td>
+            </tr>
+        }
+    </tbody>
+</table>

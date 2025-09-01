@@ -1,4 +1,4 @@
-﻿using EmployeeManagement.API.Data;
+﻿
 using EmployeeManagement.API.Services;
 using EmployeeManagement.Models;
 using MongoDB.Bson;
