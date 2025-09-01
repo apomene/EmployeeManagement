@@ -1,4 +1,5 @@
 ﻿
+using EmployeeManagement.API.Data;
 using EmployeeManagement.API.Services;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
@@ -41,12 +42,12 @@ namespace EmployeeManagement.Tests
 
 
         [TearDown]
-        public void TearDown() 
+        public void TearDown()
         {
             _dbContext.Dispose();
             _mongoRunner?.Dispose();
         }
-        
+
 
         private static AppDbContext CreateInMemoryDbContext()
         {
@@ -110,10 +111,10 @@ namespace EmployeeManagement.Tests
                     Department = department,
                     DepartmentId = department.Id,
                     EmployeeSkills = new List<EmployeeSkill> { new EmployeeSkill { EmployeeId = 4, Skill = skill1 } }
-                }                             
+                }
             );
 
-           
+
             _dbContext.Departments.Add(department);
             _dbContext.Skills.AddRange(skill1, skill2);
 
@@ -123,11 +124,12 @@ namespace EmployeeManagement.Tests
 
         private void SeedEmployeeSkills()
         {
-            
+
             var skill1 = new Skill { Id = 23, Name = "Angular" };
             var skill2 = new Skill { Id = 32, Name = "MongoDB" };
-            var employee = new Employee 
-              { Id = 17, 
+            var employee = new Employee
+            {
+                Id = 17,
                 FirstName = "Bill",
                 LastName = "Mene",
                 Email = "apo@example.com",
@@ -169,7 +171,7 @@ namespace EmployeeManagement.Tests
                 Description = $"{Name} Department"
             };
         }
-                
+
 
         [Test]
         [TestCase("FirstName", "John", "HireDate", "desc", 0, "")]
@@ -233,7 +235,8 @@ namespace EmployeeManagement.Tests
                 Description = "The Information Technology department"
             });
 
-            var dto = new CreateEmployeeDto(
+            var dto = new EmployeeDto(
+                0,
                 "John",
                 "Doe",
                 DateTime.UtcNow,
@@ -253,7 +256,8 @@ namespace EmployeeManagement.Tests
         [Test]
         public async Task CreateEmployee_InvalidDepartment_ReturnsBadRequest()
         {
-            var dto = new CreateEmployeeDto(
+            var dto = new EmployeeDto(
+                0,
                 "John",
                 "Doe",
                 DateTime.UtcNow,
@@ -263,7 +267,7 @@ namespace EmployeeManagement.Tests
             );
 
             var result = await _controller.CreateEmployee(dto);
-           
+
 
             Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
             var badRequest = result as BadRequestObjectResult;
@@ -276,7 +280,7 @@ namespace EmployeeManagement.Tests
         {
             var department = CrteateDepartment(1, "HR");
             var emp = CreateEmployee("Charlie", "Day", department);
-            
+
             _dbContext.Employees.Add(emp);
             await _dbContext.SaveChangesAsync();
 
@@ -302,10 +306,10 @@ namespace EmployeeManagement.Tests
             _dbContext.Employees.Add(emp);
             await _dbContext.SaveChangesAsync();
 
-            var dto = new UpdateEmployeeDto("EveUpdated", "JonesUpdated", emp.Email, DateTime.UtcNow, new List<string>(), 999);
+            var dto = new EmployeeDto(0, "EveUpdated", "JonesUpdated", DateTime.UtcNow, emp.Email, new List<string>(), 999);
             var result = await _controller.UpdateEmployee(emp.Id, dto);
             Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
-            
+
         }
 
         [Test]
@@ -316,7 +320,7 @@ namespace EmployeeManagement.Tests
             _dbContext.Employees.Add(emp);
             await _dbContext.SaveChangesAsync();
 
-            var dto = new UpdateEmployeeDto("EveUpdated", "JonesUpdated", emp.Email, DateTime.UtcNow,new List<string>(),department.Id);
+            var dto = new EmployeeDto(0,"EveUpdated", "JonesUpdated", DateTime.UtcNow, emp.Email, new List<string>(), department.Id);
             var result = await _controller.UpdateEmployee(emp.Id, dto);
 
             Assert.That(result, Is.InstanceOf<NoContentResult>());
@@ -331,7 +335,7 @@ namespace EmployeeManagement.Tests
             // Arrange
             var db = await SeedTestData();
             var controller = new EmployeesController(db, _logger, _auditLogger);
-            var dto = new UpdateEmployeeDto("John", "Doe", "john@example.com", DateTime.UtcNow, new List<string> { "Angular", "MongoDB" },1);
+            var dto = new EmployeeDto(0,"John", "Doe", DateTime.UtcNow, "john@example.com",new List<string> { "Angular", "MongoDB" }, 1);
 
             var result = await controller.UpdateEmployee(4, dto);
 
@@ -363,7 +367,7 @@ namespace EmployeeManagement.Tests
         public async Task AddSkill_WithNoEmployee_NotFOund()
         {
             var emp = CreateEmployee("Mark", "Spencer"); //does not exist in DB
-           
+
 
             var dto = new AddSkillDto("Java");
             _dbContext.Skills.Add(new Skill { Id = 3, Name = "Java" });
@@ -544,7 +548,8 @@ namespace EmployeeManagement.Tests
             });
             await _dbContext.SaveChangesAsync();
 
-            var dto = new CreateEmployeeDto(
+            var dto = new EmployeeDto(
+                0,
                 "John",
                 "Doe",
                 DateTime.UtcNow,

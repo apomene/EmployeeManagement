@@ -14,48 +14,13 @@ namespace EmployeeManagement.Models
     /// <param name="DepartmentId">Identifier of the department the employee belongs to.</param>
     public record EmployeeDto(
         int Id,
-        string FirstName,
-        string LastName,
-        DateTime HireDate,
-        string Email,
-        List<string> Skills,
-        int DepartmentId);
-
-    /// <summary>
-    /// DTO for creating a new employee. 
-    /// Requires first and last name, and optionally accepts email and skills.
-    /// </summary>
-    /// <param name="FirstName">First name of the employee (required).</param>
-    /// <param name="LastName">Last name of the employee (required).</param>
-    /// <param name="HireDate">Date the employee was hired.</param>
-    /// <param name="Email">Email address of the employee.</param>
-    /// <param name="Skills">Optional list of skills.</param>
-    /// <param name="DepartmentId">Identifier of the department the employee belongs to.</param>
-    public record CreateEmployeeDto(
         [Required] string FirstName,
         [Required] string LastName,
         DateTime HireDate,
-        string Email,
+        [Required] string Email,
         List<string>? Skills,
         int DepartmentId);
 
-    /// <summary>
-    /// DTO for updating an existing employee.
-    /// Requires first and last name, allows updating email, hire date, skills, and department.
-    /// </summary>
-    /// <param name="FirstName">First name of the employee (required).</param>
-    /// <param name="LastName">Last name of the employee (required).</param>
-    /// <param name="Email">Updated email address of the employee.</param>
-    /// <param name="HireDate">Updated hire date of the employee.</param>
-    /// <param name="Skills">Updated list of skills.</param>
-    /// <param name="DepartmentId">Updated department identifier.</param>
-    public record UpdateEmployeeDto(
-        [Required] string FirstName,
-        [Required] string LastName,
-        string Email,
-        DateTime HireDate,
-        List<string>? Skills,
-        int DepartmentId);
 
     /// <summary>
     /// DTO for adding a new skill to an employee.

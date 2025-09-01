@@ -40,7 +40,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
- // Add MongoDB services - commented out if not using MongoDB
+ // Add MongoDB services
 
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {

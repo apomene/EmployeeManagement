@@ -134,7 +134,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     /// <param name="dto">Employee data.</param>
     /// <returns>Created employee.</returns>
     [HttpPost]
-    public Task<IActionResult> CreateEmployee(CreateEmployeeDto dto)
+    public Task<IActionResult> CreateEmployee(EmployeeDto dto)
     {
         return ActionWrapper.ExecuteAsync(
             logger,
@@ -147,7 +147,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     /// Internal method to handle employee creation logic.
     /// Returns EmployeeDto.
     /// </summary>
-    private async Task<IActionResult> CreateEmployeeInternal(CreateEmployeeDto dto)
+    private async Task<IActionResult> CreateEmployeeInternal(EmployeeDto dto)
     {
         var department = await db.Departments.FindAsync(dto.DepartmentId);
         if (department == null)
@@ -183,7 +183,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
            entityId: dto.Email,
            action: "Create",
            newValue:dto,
-           performedBy: "system"  /// TO DO: Replace with actual user/scheduler info if we implement authentication
+           performedBy: "system"  // TO DO: Replace with actual user/scheduler info if we implement authentication
        );
 
         await db.SaveChangesAsync();
@@ -210,7 +210,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     /// <param name="dto">Updated employee data.</param>
     /// <returns>No content if successful.</returns>
     [HttpPut("{id:int}")]
-    public Task<IActionResult> UpdateEmployee(int id, UpdateEmployeeDto dto)
+    public Task<IActionResult> UpdateEmployee(int id, EmployeeDto dto)
     {
         return ActionWrapper.ExecuteAsync(
             logger,
@@ -219,7 +219,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         );
     }
 
-    private async Task<IActionResult> UpdateEmployeeInternal(int id, UpdateEmployeeDto dto)
+    private async Task<IActionResult> UpdateEmployeeInternal(int id, EmployeeDto dto)
     {
         var employee = await GetEmployeeById(id);
         if (employee == null) return NotFound();
