@@ -98,8 +98,8 @@ namespace EmployeeManagement.Tests
         [Test]
         public async Task GetLogsByEmployeeAsync_ShouldReturnOnlyEmployeeLogs()
         {
-            
 
+            await _auditLogger.LogChangeAsync("Employee", "emp1", "Create", _dto, "test-user");
             await _auditLogger.LogChangeAsync("Employee", _dto2.Email, "Create", _dto2, "test-user");
             await _auditLogger.LogChangeAsync("Employee", _dto2.Email, "Update", _dto2, "test-user");
 
