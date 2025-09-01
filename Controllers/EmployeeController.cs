@@ -180,7 +180,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         db.Employees.Add(employee);
         _ = auditLogger.LogChangeAsync(
            entityName: "Employee",
-           entityId: dto.Email,
+           entityId: dto.Email, // Using Email as unique Id of the audit log
            action: "Create",
            newValue:dto,
            performedBy: "system"  // TO DO: Replace with actual user/scheduler info if we implement authentication

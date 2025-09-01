@@ -72,7 +72,7 @@ namespace EmployeeManagement.Tests
             );
 
             await _auditLogger.LogChangeAsync("Employee", "emp1", "Create", dto, "test-user");
-            await _auditLogger.LogChangeAsync("Department", "dep1", "Update", dto2, "test-user");
+            await _auditLogger.LogChangeAsync("Department", "emp2", "Update", dto2, "test-user");
 
             // Act
             var result = await _controller.GetAll() as OkObjectResult;
@@ -80,9 +80,15 @@ namespace EmployeeManagement.Tests
             // Assert
             Assert.That(result, Is.Not.Null);
 
-            var logs = result.Value as List<BsonDocument>;
+            var logs = result.Value as List<AuditLogEntry>;
             Assert.That(logs, Is.Not.Null);
             Assert.That(logs.Count, Is.EqualTo(2));
+            Assert.That(logs.Any(l => l.EntityName == "Employee" && l.Action == "Create"), Is.True);
+            Assert.That(logs[0].EntityId == "emp2", Is.True);
+            Assert.That(logs[0].NewValue.Email == dto2.Email, Is.True);
+            Assert.That(logs[1].EntityId == "emp1", Is.True);
+            Assert.That(logs[1].NewValue.Email == dto.Email, Is.True);
+
         }
 
     }
