@@ -542,14 +542,6 @@ namespace EmployeeManagement.Tests
         [TestCase("Delete",2)]
         public async Task EmployeeActions_Should_Write_AuditLog(string actionName, int logsCount)
         {
-            // Arrange: create department
-            //_dbContext.Departments.Add(new Department
-            //{
-            //    Id = 1,
-            //    Name = "IT",
-            //    Description = "The Information Technology department"
-            //});
-           
 
             var dto = new EmployeeDto(
                 23,
@@ -561,8 +553,6 @@ namespace EmployeeManagement.Tests
                 1
             );
 
-            //await _dbContext.SaveChangesAsync();
-
             var db = await SeedTestData();
             var controller = new EmployeesController(db, _logger, _auditLogger);
 
@@ -573,6 +563,7 @@ namespace EmployeeManagement.Tests
              
             createResult = await controller.CreateEmployee(dto);
             await Task.Delay(300); // initial delay to allow for async logging
+            
             if (actionName == "Update")
             {
                 updateResult = await controller.UpdateEmployee(23, dto);
@@ -582,25 +573,9 @@ namespace EmployeeManagement.Tests
                 deleteResult = await controller.DeleteEmployee(1);
             }
 
-            // Assert: wait for audit log to appear in MongoDB
-            //var client = new MongoClient(_mongoRunner.ConnectionString);
-            //var db = client.GetDatabase("EmployeeAuditTestDb");
-            //var collection = db.GetCollection<AuditLogEntry>("AuditLogs");
-
             List<AuditLogEntry>? logs = null;
-            var timeout = TimeSpan.FromSeconds(35); // maximum wait
-            var sw = Stopwatch.StartNew();
            
             logs = await _auditLogger.GetAllLogsAsync();
-            //while (sw.Elapsed < timeout)
-            //{
-            //    logs = await _auditLogger.GetAllLogsAsync();
-
-            //    if (logs.Count >= logsCount)
-            //        break;
-
-            //    await Task.Delay(50); // small delay to avoid busy-wait
-            //}
            
             Assert.That(logs, Is.Not.Null, "Audit log was not written in time.");
             Assert.That(logs!.Count, Is.EqualTo(logsCount));
