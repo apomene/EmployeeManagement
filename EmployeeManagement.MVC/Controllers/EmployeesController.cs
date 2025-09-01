@@ -8,17 +8,27 @@ namespace EmployeeManagement.MVC.Controllers
     public class EmployeesController : Controller
     {
         private readonly HttpClient _http;
-        private readonly List<Department> _departments;
+        private List<Department> _departments = new List<Department>();
 
         public EmployeesController(IHttpClientFactory factory, IConfiguration configuration)
         {
             var apiName = configuration.GetValue<string>("ApiSettings:EmployeesApiName");
             _http = factory.CreateClient(apiName);
-            _departments = GetDepartments().Result;
+           
+        }
+
+        private async Task EnsureDepartmentsLoadedAsync()
+        {
+            if (_departments.Count == 0)
+            {
+                _departments = await GetDepartments();
+            }
         }
         // GET: Employees
         public async Task<IActionResult> Index(string? sortBy, string? search)
         {
+            await EnsureDepartmentsLoadedAsync();
+
             var employees = await _http.GetFromJsonAsync<List<Employee>>(StringConstants.EMPLOYEES)
              ?? new List<Employee>();
 
@@ -63,7 +73,7 @@ namespace EmployeeManagement.MVC.Controllers
         // GET: Create
         public async Task<IActionResult> Create()
         {
-
+            await EnsureDepartmentsLoadedAsync();
             var skills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS);
 
             var viewModel = new CreateEmployeeViewModel
@@ -171,7 +181,7 @@ namespace EmployeeManagement.MVC.Controllers
         // GET: Employees/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
-
+            await EnsureDepartmentsLoadedAsync();
             var employee = await _http.GetFromJsonAsync<EmployeeDto>($"{StringConstants.EMPLOYEES}/{id}");
             if (employee == null) return NotFound();
 

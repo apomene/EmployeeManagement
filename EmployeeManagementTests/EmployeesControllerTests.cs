@@ -539,6 +539,8 @@ namespace EmployeeManagement.Tests
         [TestCase("Create", 1)]
         [TestCase("Update", 2)]
         [TestCase("Delete",2)]
+        [TestCase("ADDED_SKILL", 2)]
+        [TestCase("REMOVED_SKILL", 2)]
         public async Task EmployeeActions_Should_Write_AuditLog(string actionName, int logsCount)
         {
 
@@ -555,21 +557,25 @@ namespace EmployeeManagement.Tests
             var db = await SeedTestData();
             var controller = new EmployeesController(db, _logger, _auditLogger);
 
-            // Act: call API methods based on actionName
-            IActionResult createResult = null;
-            IActionResult updateResult = null;
-            IActionResult deleteResult = null;
              
-            createResult = await controller.CreateEmployee(dto);
+            await controller.CreateEmployee(dto);
             await Task.Delay(300); // initial delay to allow for async logging
             
             if (actionName == "Update")
             {
-                updateResult = await controller.UpdateEmployee(23, dto);
+                await controller.UpdateEmployee(23, dto);
             }
             if (actionName == "Delete")
             {
-                deleteResult = await controller.DeleteEmployee(1);
+                await controller.DeleteEmployee(1);
+            }
+            if (actionName == "ADDED_SKILL")
+            {
+                await controller.AddSkill(23,23);
+            }
+            if (actionName == "REMOVED_SKILL")
+            {
+                 await controller.RemoveSkill(4,23);
             }
 
             List<AuditLogEntry>? logs = null;

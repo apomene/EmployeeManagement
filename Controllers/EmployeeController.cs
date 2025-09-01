@@ -168,6 +168,11 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         if (department == null)
             return BadRequest(StringConstants.INVALID_DEPARTMENT);
 
+        if (await db.Employees.AnyAsync(e => e.Email == dto.Email))
+        {
+            return BadRequest($"An employee with email '{dto.Email}' already exists.");
+        }
+
         var employee = new Employee
         {
             Id = dto.Id,
@@ -386,6 +391,21 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         });
 
         await db.SaveChangesAsync();
+
+        var employeeDto = new EmployeeDto(id,
+                                            employee!.FirstName,
+                                            employee.LastName,
+                                            employee.HireDate,
+                                            employee.Email,
+                                            employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
+                                            employee.DepartmentId
+                                          );
+        _ = auditLogger.LogChangeAsync(
+           entityName: "Employee",
+           entityId: employeeDto.Email, // Using Email as unique Id of the audit log
+           action: "ADDED_SKILL",
+           newValue: employeeDto,
+           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
         return NoContent();
     }
 
@@ -412,6 +432,26 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         db.EmployeeSkills.Remove(employeeSkill);
         await db.SaveChangesAsync();
+
+        var employee = await db.Employees
+           .Include(e => e.EmployeeSkills)
+           .ThenInclude(es => es.Skill)
+           .FirstOrDefaultAsync(e => e.Id == id);
+        var employeeDto = new EmployeeDto(id,
+                                           employee!.FirstName,
+                                           employee.LastName,
+                                           employee.HireDate,
+                                           employee.Email,
+                                           employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
+                                           employee.DepartmentId
+                                         );
+        _ = auditLogger.LogChangeAsync(
+           entityName: "Employee",
+           entityId: employeeDto.Email, // Using Email as unique Id of the audit log
+           action: "REMOVED_SKILL",
+           newValue: employeeDto,
+           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
+
         return NoContent();
     }
 
