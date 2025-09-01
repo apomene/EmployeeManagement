@@ -13,7 +13,7 @@ using static MongoDB.Driver.WriteConcern;
 [Route("api/[controller]")]
 public class EmployeesController(AppDbContext db, ILogger<EmployeesController> logger, IAuditLogger auditLogger) : ControllerBase
 {
-     
+
     /// <summary>
     /// Gets all employees with optional filtering.
     /// </summary>
@@ -84,7 +84,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         return Ok(dto);
     }
-    
+
     /// <summary>
     /// Gets all departments.
     /// </summary>
@@ -94,7 +94,8 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     {
         return ActionWrapper.ExecuteAsync<IEnumerable<Department>>(
            logger,
-           async () => {
+           async () =>
+           {
                var departments = await db.Departments.AsNoTracking().ToListAsync();
                return departments;
            },
@@ -118,7 +119,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         );
     }
 
-    private async Task <List<EmployeeSkill>> GetEmployeeSkillsInternal(int id)
+    private async Task<List<EmployeeSkill>> GetEmployeeSkillsInternal(int id)
     {
         var employeeSkills = db.EmployeeSkills
             .Where(emp => emp.EmployeeId == id)
@@ -136,11 +137,25 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     [HttpPost]
     public Task<IActionResult> CreateEmployee(EmployeeDto dto)
     {
-        return ActionWrapper.ExecuteAsync(
+        var result = ActionWrapper.ExecuteAsync(
             logger,
             () => CreateEmployeeInternal(dto),
             StringConstants.LOG_EMPLOYEE_CREATED, dto.FirstName, dto.LastName
         );
+        if (result.IsCompleted && result.Result is ObjectResult objResult)
+        {
+            if (objResult.StatusCode > 200 && objResult.StatusCode < 300)
+            {
+                _ = auditLogger.LogChangeAsync(
+                   entityName: "Employee",
+                   entityId: dto.Email, // Using Email as unique Id of the audit log
+                   action: "Create",
+                   newValue: dto,
+                   performedBy: "system"  // TO DO: Replace with actual user/scheduler info if we implement authentication
+               );
+            }
+        }
+        return result;
     }
 
     /// <summary>
@@ -155,6 +170,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         var employee = new Employee
         {
+            Id = dto.Id,
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             HireDate = dto.HireDate,
@@ -178,14 +194,6 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         }
 
         db.Employees.Add(employee);
-        _ = auditLogger.LogChangeAsync(
-           entityName: "Employee",
-           entityId: dto.Email, // Using Email as unique Id of the audit log
-           action: "Create",
-           newValue:dto,
-           performedBy: "system"  // TO DO: Replace with actual user/scheduler info if we implement authentication
-       );
-
         await db.SaveChangesAsync();
 
         var resultDto = new EmployeeDto(
@@ -198,7 +206,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
             employee.DepartmentId
         );
 
-        return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, resultDto); 
+        return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, resultDto);
     }
 
 
@@ -212,11 +220,25 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     [HttpPut("{id:int}")]
     public Task<IActionResult> UpdateEmployee(int id, EmployeeDto dto)
     {
-        return ActionWrapper.ExecuteAsync(
+        var result = ActionWrapper.ExecuteAsync(
             logger,
             () => UpdateEmployeeInternal(id, dto),
             StringConstants.LOG_EMPLOYEE_UPDATED, id
         );
+        if (result.IsCompleted && result.Result is NoContentResult objResult)
+        {
+            if (objResult.StatusCode == 204)
+            {
+                _ = auditLogger.LogChangeAsync(
+                   entityName: "Employee",
+                   entityId: dto.Email, // Using Email as unique Id of the audit log
+                   action: "Update",
+                   newValue: dto,
+                   performedBy: "system"  // TO DO: Replace with actual user/scheduler info if we implement authentication
+               );
+            }
+        }
+        return result;
     }
 
     private async Task<IActionResult> UpdateEmployeeInternal(int id, EmployeeDto dto)
@@ -261,13 +283,14 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     /// <param name="id">Employee Id.</param>
     /// <returns>No content if successful.</returns>
     [HttpDelete("{id:int}")]
-    public Task<IActionResult> DeleteEmployee(int id)
+    public async Task<IActionResult> DeleteEmployee(int id)
     {
-        return ActionWrapper.ExecuteAsync(
+        var result = ActionWrapper.ExecuteAsync(
             logger,
             () => DeleteEmployeeInternal(id),
             StringConstants.LOG_EMPLOYEE_DELETED, id
-        );
+        );      
+        return await result;
     }
 
     private async Task<IActionResult> DeleteEmployeeInternal(int id)
@@ -277,6 +300,20 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         db.Employees.Remove(employee);
         await db.SaveChangesAsync();
+        var employeeDto = new EmployeeDto(  id,
+                                            employee!.FirstName,
+                                            employee.LastName,
+                                            employee.HireDate,
+                                            employee.Email,
+                                            employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
+                                            employee.DepartmentId
+                                          );
+        _ = auditLogger.LogChangeAsync(
+           entityName: "Employee",
+           entityId: employeeDto.Email, // Using Email as unique Id of the audit log
+           action: "Delete",
+           newValue: employeeDto,
+           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
         return NoContent();
     }
 
