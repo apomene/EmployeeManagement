@@ -1,6 +1,8 @@
+using EmployeeManagement.API.Services;
 using EmployeeManagement.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using MongoDB.Driver;
 using NLog.Web;
 using System.Reflection;
 
@@ -38,7 +40,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-/* // Add MongoDB services - commented out if not using MongoDB
+ // Add MongoDB services - commented out if not using MongoDB
 
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
@@ -55,7 +57,7 @@ builder.Services.AddScoped<IMongoDatabase>(sp =>
 
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 
-*/
+
 
 
 
