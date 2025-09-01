@@ -536,11 +536,11 @@ namespace EmployeeManagement.Tests
         }
 
         [Test]
-        [TestCase("Create", 1)]
-        [TestCase("Update", 2)]
-        [TestCase("Delete",2)]
-        [TestCase("ADDED_SKILL", 2)]
-        [TestCase("REMOVED_SKILL", 2)]
+        [TestCase(StringConstants.AUDIT_CREATE, 1)]
+        [TestCase(StringConstants.AUDIT_UPDATE , 2)]
+        [TestCase(StringConstants.AUDIT_DELETE , 2)]
+        [TestCase(StringConstants.AUDIT_SKILL_ADD, 2)]
+        [TestCase(StringConstants.AUDIT_SKILL_REMOVE, 2)]
         public async Task EmployeeActions_Should_Write_AuditLog(string actionName, int logsCount)
         {
 
@@ -561,19 +561,19 @@ namespace EmployeeManagement.Tests
             await controller.CreateEmployee(dto);
             await Task.Delay(300); // initial delay to allow for async logging
             
-            if (actionName == "Update")
+            if (actionName == StringConstants.AUDIT_UPDATE)
             {
                 await controller.UpdateEmployee(23, dto);
             }
-            if (actionName == "Delete")
+            if (actionName == StringConstants.AUDIT_DELETE)
             {
                 await controller.DeleteEmployee(1);
             }
-            if (actionName == "ADDED_SKILL")
+            if (actionName == StringConstants.AUDIT_SKILL_ADD)
             {
                 await controller.AddSkill(23,23);
             }
-            if (actionName == "REMOVED_SKILL")
+            if (actionName == StringConstants.AUDIT_SKILL_REMOVE)
             {
                  await controller.RemoveSkill(4,23);
             }

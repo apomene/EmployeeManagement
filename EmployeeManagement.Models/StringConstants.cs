@@ -55,5 +55,15 @@ namespace EmployeeManagement.Models
         public const string LOG_SKILL_DELETED = "Deleted skill {SkillId}";
         public const string LOG_SKILLS_EXPORTED = "Exported skills to CSV";
 
+        //Audit Logs
+        public const string AUDIT_CREATE = "Create";
+        public const string AUDIT_UPDATE =  "Update";
+        public const string AUDIT_DELETE =  "Delete";
+        public const string AUDIT_SKILL_ADD = "ADDED_SKILL";
+        public const string AUDIT_SKILL_REMOVE = "REMOVED_SKILL";
+        public const string NO_LOGS_FOUND = "No audit logs found for employee with e-mail: ";
+        public const string AUDIT_LOGS = "auditlogs";
+
+
     }
 }

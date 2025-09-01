@@ -1,6 +1,5 @@
 using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Json;
 
 namespace EmployeeManagement.MVC.Controllers
 {
@@ -14,10 +13,9 @@ namespace EmployeeManagement.MVC.Controllers
             _http = factory.CreateClient(apiName);
         }
 
-        // GET: AuditLogs/Employee/{email}
         public async Task<IActionResult> Employee(string email)
         {
-            var logs = await _http.GetFromJsonAsync<List<AuditLogEntry>>($"auditlogs/{email}");
+            var logs = await _http.GetFromJsonAsync<List<AuditLogEntry>>($"{ StringConstants.AUDIT_LOGS}/{email}");
 
             if (logs == null || !logs.Any())
             {

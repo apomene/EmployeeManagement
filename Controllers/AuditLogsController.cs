@@ -23,7 +23,7 @@ namespace EmployeeManagement.API.Controllers
             var logs = await _auditLogger.GetLogsByEmployeeAsync(email);
 
             if (logs == null || !logs.Any())
-                return NotFound($"No audit logs found for employee with e-mail'{email}'.");
+                return NotFound($"{StringConstants.NO_LOGS_FOUND}{email}'.");
 
             return Ok(logs);
         }
