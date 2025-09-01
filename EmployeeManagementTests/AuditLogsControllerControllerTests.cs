@@ -15,18 +15,17 @@ namespace EmployeeManagement.Tests
 {
   
     [TestFixture]
-    public class AuditLogsControllerIntegrationTests
+    public class AuditLogsControllerTests
     {
         private MongoDbRunner _mongoRunner;
-        private IMongoDatabase _db;
         private AuditLogger _auditLogger;
         private AuditLogsController _controller;
+        private EmployeeDto _dto;
+        private EmployeeDto _dto2;
 
         [SetUp]
         public void Setup()
-        {
-            
-
+        {           
             // Start temporary MongoDB
             _mongoRunner = MongoDbRunner.Start();
 
@@ -37,6 +36,31 @@ namespace EmployeeManagement.Tests
             _auditLogger = new AuditLogger(database, NullLogger<AuditLogger>.Instance);
             _controller = new AuditLogsController(_auditLogger);
 
+            SetUpData();
+        }
+
+        private void SetUpData()
+        {
+            // Arrange
+             _dto = new EmployeeDto(
+                 1,
+                "John",
+                "Doe",
+                DateTime.UtcNow,
+                "john.doe@yahoo.com",
+                new List<string> { "C#" },
+                1
+            );
+
+             _dto2 = new EmployeeDto(
+                 2,
+                "Apo",
+                "Mene",
+                DateTime.UtcNow,
+                "apo.mene@yahoo.com",
+                new List<string> { "C#" },
+                1
+            );
         }
 
         [TearDown]
@@ -49,29 +73,10 @@ namespace EmployeeManagement.Tests
         [Test]
         public async Task GetAll_ShouldReturnAllLogs()
         {
-            // Arrange
-            var dto = new EmployeeDto(
-                 1,
-                "John",
-                "Doe",
-                DateTime.UtcNow,
-                "john.doe@yahoo.com",
-                new List<string> { "C#" },
-                1
-            );
+            
 
-            var dto2 = new EmployeeDto(
-                 2,
-                "Apo",
-                "Mene",
-                DateTime.UtcNow,
-                "apo.mene@yahoo.com",
-                new List<string> { "C#" },
-                1
-            );
-
-            await _auditLogger.LogChangeAsync("Employee", "emp1", "Create", dto, "test-user");
-            await _auditLogger.LogChangeAsync("Department", "emp2", "Update", dto2, "test-user");
+            await _auditLogger.LogChangeAsync("Employee", "emp1", "Create", _dto, "test-user");
+            await _auditLogger.LogChangeAsync("Department", "emp2", "Update", _dto2, "test-user");
 
             // Act
             var result = await _controller.GetAll() as OkObjectResult;
@@ -84,29 +89,19 @@ namespace EmployeeManagement.Tests
             Assert.That(logs.Count, Is.EqualTo(2));
             Assert.That(logs.Any(l => l.EntityName == "Employee" && l.Action == "Create"), Is.True);
             Assert.That(logs[0].EntityId == "emp2", Is.True);
-            Assert.That(logs[0].NewValue.Email == dto2.Email, Is.True);
+            Assert.That(logs[0].NewValue.Email == _dto2.Email, Is.True);
             Assert.That(logs[1].EntityId == "emp1", Is.True);
-            Assert.That(logs[1].NewValue.Email == dto.Email, Is.True);
+            Assert.That(logs[1].NewValue.Email == _dto.Email, Is.True);
 
         }
 
         [Test]
         public async Task GetLogsByEmployeeAsync_ShouldReturnOnlyEmployeeLogs()
         {
-            // Arrange
-           
-            var dto2 = new EmployeeDto(
-                 2,
-                "Apo",
-                "Mene",
-                DateTime.UtcNow,
-                "apo.mene@yahoo.com",
-                new List<string> { "C#" },
-                1
-            );
+            
 
-            await _auditLogger.LogChangeAsync("Employee", dto2.Email, "Create", dto2, "test-user");
-            await _auditLogger.LogChangeAsync("Employee", dto2.Email, "Update", dto2, "test-user");
+            await _auditLogger.LogChangeAsync("Employee", _dto2.Email, "Create", _dto2, "test-user");
+            await _auditLogger.LogChangeAsync("Employee", _dto2.Email, "Update", _dto2, "test-user");
 
             // Act
             var result = await _auditLogger.GetLogsByEmployeeAsync("apo.mene@yahoo.com");
