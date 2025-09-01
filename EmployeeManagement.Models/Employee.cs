@@ -1,6 +1,11 @@
 ﻿
+
+
+using Microsoft.EntityFrameworkCore;
+
 namespace EmployeeManagement.Models
 {
+    [Index(nameof(Email), IsUnique = true)]
     public class Employee
     {
         public int Id { get; set; }   
