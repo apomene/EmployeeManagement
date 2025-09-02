@@ -15,8 +15,8 @@ namespace EmployeeManagement.MVC.Controllers
 
         public async Task<IActionResult> Employee(string email)
         {
-            var logs = await _http.GetFromJsonAsync<List<AuditLogEntry>>($"{ StringConstants.AUDIT_LOGS}/{email}");
-
+            var logs = await _http.GetFromJsonAsync<List<AuditLogEntry>>($"{StringConstants.AUDIT_LOGS}/{email}");
+           
             if (logs == null || !logs.Any())
             {
                 ViewBag.Email = email;

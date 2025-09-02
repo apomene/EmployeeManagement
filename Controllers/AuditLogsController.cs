@@ -11,21 +11,42 @@ namespace EmployeeManagement.API.Controllers
     public class AuditLogsController : ControllerBase
     {
         private readonly IAuditLogger _auditLogger;
+        private readonly ILogger<AuditLogsController> _logger;
 
-        public AuditLogsController(IAuditLogger auditLogger)
+        public AuditLogsController(IAuditLogger auditLogger, ILogger<AuditLogsController> logger)
         {
+            _logger = logger;
             _auditLogger = auditLogger;
         }
 
         [HttpGet("{email}")]
-        public async Task<ActionResult<List<AuditLogEntry>>> GetEmployeeLogs(string email)
+        public  Task<ActionResult<List<AuditLogEntry>>> GetEmployeeLogs(string email)
         {
+            var result =  ActionWrapper.ExecuteAsync(
+                _logger,
+                () => GetEmployeeLogsInternal(email),
+                StringConstants.LOGS_ERROR, email
+                );
+            return result;
+        }
+
+        private async Task<List<AuditLogEntry>> GetEmployeeLogsInternal(string email)
+        {
+
             var logs = await _auditLogger.GetLogsByEmployeeAsync(email);
+            try
+            {
+                if (logs == null || !logs.Any())
+                    throw new KeyNotFoundException($"{StringConstants.NO_LOGS_FOUND}{email}'.");
 
-            if (logs == null || !logs.Any())
-                return NotFound($"{StringConstants.NO_LOGS_FOUND}{email}'.");
-
-            return Ok(logs);
+            }
+            catch (KeyNotFoundException kex)
+            {
+                _logger.LogWarning(kex.Message);
+                return new List<AuditLogEntry>();
+            }
+          
+            return logs;
         }
 
 

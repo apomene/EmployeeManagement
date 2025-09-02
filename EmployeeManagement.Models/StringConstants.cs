@@ -63,6 +63,7 @@ namespace EmployeeManagement.Models
         public const string AUDIT_SKILL_REMOVE = "REMOVED_SKILL";
         public const string NO_LOGS_FOUND = "No audit logs found for employee with e-mail: ";
         public const string AUDIT_LOGS = "auditlogs";
+        public const string LOGS_ERROR = "Error retrieving audit logs for employee with e-mail: {email}";
 
 
     }

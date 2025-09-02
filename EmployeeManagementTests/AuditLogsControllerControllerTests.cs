@@ -21,6 +21,8 @@ namespace EmployeeManagement.Tests
         private AuditLogsController _controller;
         private EmployeeDto _dto;
         private EmployeeDto _dto2;
+        private readonly NullLogger<AuditLogsController> _logger = NullLogger<AuditLogsController>.Instance;
+
 
         [SetUp]
         public void Setup()
@@ -33,7 +35,7 @@ namespace EmployeeManagement.Tests
 
             // use real AuditLogger
             _auditLogger = new AuditLogger(database, NullLogger<AuditLogger>.Instance);
-            _controller = new AuditLogsController(_auditLogger);
+            _controller = new AuditLogsController(_auditLogger,_logger);
 
             SetUpData();
         }

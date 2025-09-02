@@ -25,7 +25,7 @@ public static class ActionWrapper
         try
         {
             T result = await action();
-
+            
             if ( result is ObjectResult)
             {
                 var objResult = result as ObjectResult;
@@ -43,13 +43,14 @@ public static class ActionWrapper
                 }
                 return result;
             }
+           
 
             if (!string.IsNullOrEmpty(successMessage))
             {
                 logger.LogInformation(successMessage, successParams);
             }
             return result;
-        }
+        }       
         catch (BadRequestException brex)
         {
             logger.LogWarning(brex, "Bad request: {Message}", brex.Message);
@@ -98,6 +99,11 @@ public static class ActionWrapper
                 logger.LogInformation(successMessage, successParams);
             }
             return result;
+        }
+        catch (KeyNotFoundException ex)
+        {
+            logger.LogWarning(ex.Message);
+            return new StatusCodeResult(404);
         }
         catch (Exception ex)
         {
