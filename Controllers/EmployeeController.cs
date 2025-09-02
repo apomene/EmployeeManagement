@@ -32,17 +32,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
             query = filter.ApplyAll(query);
 
-            var employees = await query
-                .Select(e => new EmployeeDto(
-                    e.Id,
-                    e.FirstName,
-                    e.LastName,
-                    e.HireDate,
-                    e.Email,
-                    e.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
-                    e.DepartmentId
-                ))
-                .ToListAsync();
+            var employees = await query.Select(e => ToEmployeeDto(e)) .ToListAsync();
 
             return employees;
         },
@@ -71,15 +61,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         if (employee == null) return NotFound();
 
-        var dto = new EmployeeDto(
-            employee.Id,
-            employee.FirstName,
-            employee.LastName,
-            employee.HireDate,
-            employee.Email,
-            employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
-            employee.DepartmentId
-        );
+        var dto = ToEmployeeDto(employee!);
 
         return Ok(dto);
     }
@@ -150,7 +132,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
                    entityId: dto.Email, // Using Email as unique Id of the audit log
                    action:StringConstants.AUDIT_CREATE,
                    newValue: dto,
-                   performedBy:StringConstants.AUDIT_USER  // TO DO: Replace with actual user/scheduler info if we implement authentication
+                   performedBy: "system"  // TO DO: Replace with actual user/scheduler info if we implement authentication
                );
             }
         }
@@ -200,15 +182,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         db.Employees.Add(employee);
         await db.SaveChangesAsync();
 
-        var resultDto = new EmployeeDto(
-            employee.Id,
-            employee.FirstName,
-            employee.LastName,
-            employee.HireDate,
-            employee.Email,
-            employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
-            employee.DepartmentId
-        );
+        var resultDto = ToEmployeeDto(employee!);
 
         return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, resultDto);
     }
@@ -238,7 +212,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
                    entityId: dto.Email, // Using Email as unique Id of the audit log
                    action: StringConstants.AUDIT_UPDATE,
                    newValue: dto,
-                   performedBy:StringConstants.AUDIT_USER  // TO DO: Replace with actual user/scheduler info if we implement authentication
+                   performedBy: "system"  // TO DO: Replace with actual user/scheduler info if we implement authentication
                );
             }
         }
@@ -304,20 +278,14 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         db.Employees.Remove(employee);
         await db.SaveChangesAsync();
-        var employeeDto = new EmployeeDto(  id,
-                                            employee!.FirstName,
-                                            employee.LastName,
-                                            employee.HireDate,
-                                            employee.Email,
-                                            employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
-                                            employee.DepartmentId
-                                          );
+        var employeeDto = ToEmployeeDto(employee!);
+
         _ = auditLogger.LogChangeAsync(
            entityName: "Employee",
            entityId: employeeDto.Email, // Using Email as unique Id of the audit log
            action: StringConstants.AUDIT_DELETE,
            newValue: employeeDto,
-           performedBy:StringConstants.AUDIT_USER); // TO DO: Replace with actual user/scheduler info if we implement authentication
+           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
         return NoContent();
     }
 
@@ -391,20 +359,14 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         await db.SaveChangesAsync();
 
-        var employeeDto = new EmployeeDto(id,
-                                            employee!.FirstName,
-                                            employee.LastName,
-                                            employee.HireDate,
-                                            employee.Email,
-                                            employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
-                                            employee.DepartmentId
-                                          );
+        var employeeDto = ToEmployeeDto(employee!);
+
         _ = auditLogger.LogChangeAsync(
            entityName: "Employee",
            entityId: employeeDto.Email, // Using Email as unique Id of the audit log
            action: StringConstants.AUDIT_SKILL_ADD,
            newValue: employeeDto,
-           performedBy:StringConstants.AUDIT_USER); // TO DO: Replace with actual user/scheduler info if we implement authentication
+           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
         return NoContent();
     }
 
@@ -436,20 +398,14 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
            .Include(e => e.EmployeeSkills)
            .ThenInclude(es => es.Skill)
            .FirstOrDefaultAsync(e => e.Id == id);
-        var employeeDto = new EmployeeDto(id,
-                                           employee!.FirstName,
-                                           employee.LastName,
-                                           employee.HireDate,
-                                           employee.Email,
-                                           employee.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
-                                           employee.DepartmentId
-                                         );
+        var employeeDto = ToEmployeeDto(employee!);
+
         _ = auditLogger.LogChangeAsync(
            entityName: "Employee",
            entityId: employeeDto.Email, // Using Email as unique Id of the audit log
            action: StringConstants.AUDIT_SKILL_REMOVE,
            newValue: employeeDto,
-           performedBy:StringConstants.AUDIT_USER); // TO DO: Replace with actual user/scheduler info if we implement authentication
+           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
 
         return NoContent();
     }
@@ -489,4 +445,22 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
            .Include(e => e.EmployeeSkills)
                .ThenInclude(es => es.Skill)
            .FirstOrDefaultAsync(e => e.Id == id);
+
+    // Private helper: safely maps Employee to EmployeeDto
+    private static EmployeeDto ToEmployeeDto(Employee employee)
+    {
+        return new EmployeeDto(
+            employee.Id,
+            employee.FirstName,
+            employee.LastName,
+            employee.HireDate,
+            employee.Email,
+            employee.EmployeeSkills?
+                .Select(es => es.Skill?.Name ?? string.Empty)  // Safe navigation
+                .Where(name => !string.IsNullOrEmpty(name))    // Drop null/empty skill names
+                .ToList()
+                ?? new List<string>(),
+            employee.DepartmentId
+        );
+    }
 }
