@@ -1,7 +1,7 @@
 ﻿@{
-    ViewData["Title"] = "No Audit Logs";
+    ViewData["Title"] = "No Logs Found";
 }
 
-<h2>No Audit Logs Found</h2>
-<p>No audit logs were found for employee with e-mail <strong>@ViewBag.Email</strong>.</p>
-<a asp-controller="Employees" asp-action="Index" class="btn btn-primary">Back to Employees</a>
+<div class="alert alert-warning mt-4">
+    No logs found for employee: <strong>@ViewBag.Email</strong>
+</div>

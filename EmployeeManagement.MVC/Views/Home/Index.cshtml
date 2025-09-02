@@ -8,17 +8,7 @@
     <ul>
         <li><a asp-controller="Skills" asp-action="Index">Manage Skills</a></li>
         <li><a asp-controller="Employees" asp-action="Index">Manage Employees</a></li>
-        <li><a asp-controller="AuditLogs" asp-action="Employee">View Audit Logs</a></li>
+        <li><a asp-controller="AuditLogs" asp-action="Index">View Audit Logs</a></li>
     </ul>
 </div>
 
-<hr />
-
-<h2>Search Audit Logs</h2>
-<form asp-controller="AuditLogs" asp-action="Employee" method="get" class="form-inline">
-    <div class="form-group">
-        <label for="email">Employee Email:</label>
-        <input type="email" id="email" name="email" class="form-control" required />
-    </div>
-    <button type="submit" class="btn btn-primary">Search</button>
-</form>

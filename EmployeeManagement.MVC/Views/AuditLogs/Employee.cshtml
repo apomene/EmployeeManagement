@@ -2,12 +2,26 @@
 
 @{
     ViewData["Title"] = "Employee Audit Logs";
+    var email = ViewBag.Email as string;
 }
 
-<h2>Audit Logs for Employee</h2>
+<h2 class="mb-4">
+    @(string.IsNullOrEmpty(email)
+        ? "All Audit Logs"
+        : $"Audit Logs for Employee: {email}")
+</h2>
 
-<table class="table table-striped">
-    <thead>
+<form asp-controller="AuditLogs" asp-action="Employee" method="get" class="form-inline mb-4">
+    <div class="form-group m-2">
+        <label for="email" class="m-5px">Employee Email:</label>
+        <input type="email" id="email" name="email" class="form-control m-5px" value="@email" />
+    </div>
+    <button type="submit" class="btn btn-primary m-2 m-5px">Search</button>
+    <button type="submit" name="email" value="" class="btn btn-secondary m-2 m-5px">Get All Logs</button>
+</form>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-dark">
         <tr>
             <th>Action</th>
             <th>Entity</th>
@@ -22,13 +36,43 @@
         @foreach (var log in Model)
         {
             <tr>
-                <td>@log.Action</td>
+                <td><span class="badge bg-info">@log.Action</span></td>
                 <td>@log.EntityName</td>
                 <td>@log.EntityId</td>
                 <td>@log.PerformedBy</td>
-                <td>@log.Timestamp.ToString("u")</td>
-                <td>@(log.OldValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(log.OldValue) : "-")</td>
-                <td>@(log.NewValue != null ? Newtonsoft.Json.JsonConvert.SerializeObject(log.NewValue) : "-")</td>
+                <td>@log.Timestamp.ToString("g")</td>
+                <td>
+                    @if (log.OldValue != null)
+                    {
+                        <div class="p-2 border rounded bg-light small">
+                            <strong>@log.OldValue.FirstName @log.OldValue.LastName</strong><br />
+                            <span>Email: @log.OldValue.Email</span><br />
+                            <span>Hire Date: @log.OldValue.HireDate.ToShortDateString()</span><br />
+                            <span>Department: @log.OldValue.DepartmentId</span><br />
+                            <span>Skills: @(log.OldValue.Skills != null ? string.Join(", ", log.OldValue.Skills) : "-")</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="text-muted">-</span>
+                    }
+                </td>
+                <td>
+                    @if (log.NewValue != null)
+                    {
+                        <div class="p-2 border rounded bg-light small">
+                            <strong>@log.NewValue.FirstName @log.NewValue.LastName</strong><br />
+                            <span>Email: @log.NewValue.Email</span><br />
+                            <span>Hire Date: @log.NewValue.HireDate.ToShortDateString()</span><br />
+                            <span>Department: @log.NewValue.DepartmentId</span><br />
+                            <span>Skills: @(log.NewValue.Skills != null ? string.Join(", ", log.NewValue.Skills) : "-")</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="text-muted">-</span>
+                    }
+                </td>
             </tr>
         }
     </tbody>

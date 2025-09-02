@@ -1,0 +1,14 @@
+﻿@{
+    ViewData["Title"] = "Audit Logs";
+}
+
+<h2>Search Audit Logs</h2>
+
+<form asp-controller="AuditLogs" asp-action="Employee" method="get" class="form-inline mb-4">
+    <div class="form-group m-2">
+        <label for="email">Employee Email:</label>
+        <input type="email" id="email" name="email" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary m-2">Search</button>
+    <button type="submit" name="email" value="" class="btn btn-secondary m-2">Get All Logs</button>
+</form>

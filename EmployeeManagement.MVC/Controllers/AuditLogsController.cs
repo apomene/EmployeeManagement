@@ -13,13 +13,19 @@ namespace EmployeeManagement.MVC.Controllers
             _http = factory.CreateClient(apiName);
         }
 
+        public  IActionResult Index()
+        {
+            return View();
+        }
+
         public async Task<IActionResult> Employee(string email)
         {
             var logs = await _http.GetFromJsonAsync<List<AuditLogEntry>>($"{StringConstants.AUDIT_LOGS}/{email}");
-           
+            ViewBag.Email = email;
+            
             if (logs == null || !logs.Any())
             {
-                ViewBag.Email = email;
+                
                 return View("NoLogs");
             }
 
