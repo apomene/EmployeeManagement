@@ -96,7 +96,7 @@ namespace EmployeeManagement.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(result, Is.TypeOf<CreatedAtActionResult>());
+                Assert.That(result, Is.TypeOf<CreatedResult>());
                 Assert.That(_dbContext.Skills.Count(), Is.EqualTo(2));
             });
         }
