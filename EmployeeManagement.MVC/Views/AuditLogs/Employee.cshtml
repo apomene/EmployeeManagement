@@ -78,3 +78,25 @@
         }
     </tbody>
 </table>
+@if (ViewBag.TotalPages > 1)
+{
+    <nav aria-label="Audit Logs Pagination">
+        <ul class="pagination">
+            <li class="page-item @(ViewBag.PageNumber == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Employee" asp-route-email="@ViewBag.Email" asp-route-pageNumber="@(ViewBag.PageNumber - 1)">Previous</a>
+            </li>
+
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(ViewBag.PageNumber == i ? "active" : "")">
+                    <a class="page-link" asp-action="Employee" asp-route-email="@ViewBag.Email" asp-route-pageNumber="@i">@i</a>
+                </li>
+            }
+
+            <li class="page-item @(ViewBag.PageNumber == ViewBag.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Employee" asp-route-email="@ViewBag.Email" asp-route-pageNumber="@(ViewBag.PageNumber + 1)">Next</a>
+            </li>
+        </ul>
+    </nav>
+}
+

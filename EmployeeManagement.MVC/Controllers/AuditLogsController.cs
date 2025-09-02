@@ -6,11 +6,13 @@ namespace EmployeeManagement.MVC.Controllers
     public class AuditLogsController : Controller
     {
         private readonly HttpClient _http;
+        private  int _pageSize;
 
         public AuditLogsController(IHttpClientFactory factory, IConfiguration configuration)
         {
             var apiName = configuration.GetValue<string>("ApiSettings:EmployeesApiName");
             _http = factory.CreateClient(apiName);
+            _pageSize = configuration.GetValue<int>("pageSize", 50);
         }
 
         public  IActionResult Index()
@@ -18,18 +20,25 @@ namespace EmployeeManagement.MVC.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Employee(string email)
+
+        public async Task<IActionResult> Employee(string email, int pageNumber = 1)
         {
-            var logs = await _http.GetFromJsonAsync<List<AuditLogEntry>>($"{StringConstants.AUDIT_LOGS}/{email}");
-            ViewBag.Email = email;
-            
-            if (logs == null || !logs.Any())
+            var result = await _http.GetFromJsonAsync<PagedResult<AuditLogEntry>>(
+                $"{StringConstants.AUDIT_LOGS}/{email}?pageNumber={pageNumber}&pageSize={_pageSize}");
+
+            if (result == null || !result.Items.Any())
             {
-                
+                ViewBag.Email = email;
                 return View("NoLogs");
             }
 
-            return View(logs);
+            ViewBag.Email = email;
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = _pageSize;
+            ViewBag.TotalPages = result.TotalPages;
+
+            return View(result.Items);
         }
+
     }
 }

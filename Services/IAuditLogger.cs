@@ -1,4 +1,5 @@
 ﻿using EmployeeManagement.Models;
+using MongoDB.Driver;
 
 namespace EmployeeManagement.API.Services
 {
@@ -15,6 +16,12 @@ namespace EmployeeManagement.API.Services
         Task<List<AuditLogEntry>> GetAllLogsAsync();
 
         Task<List<AuditLogEntry>> GetLogsByEmployeeAsync(string employeeId);
+
+        Task<List<AuditLogEntry>> GetLogsByEmployeeAsync(string employeeId, int pageNumber, int pageSize);
+        Task<List<AuditLogEntry>> GetAllLogsAsync(int pageNumber, int pageSize);
+        Task<int> CountAllLogsAsync();
+
+        Task<int> CountAsync(FilterDefinition<AuditLogEntry> filter);
     }
 
 }

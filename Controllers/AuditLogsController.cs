@@ -3,6 +3,7 @@ using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace EmployeeManagement.API.Controllers
 {
@@ -20,15 +21,28 @@ namespace EmployeeManagement.API.Controllers
         }
 
         [HttpGet("{email}")]
-        public  Task<ActionResult<List<AuditLogEntry>>> GetEmployeeLogs(string email)
+        public async Task<ActionResult<PagedResult<AuditLogEntry>>> GetEmployeeLogs( string email,int pageNumber = 1, int pageSize = 50)
         {
-            var result =  ActionWrapper.ExecuteAsync(
-                _logger,
-                () => GetEmployeeLogsInternal(email),
-                StringConstants.LOGS_ERROR, email
-                );
-            return result;
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0 || pageSize > 100) pageSize = 50; // max 100 per page
+
+            var filter = Builders<AuditLogEntry>.Filter.Eq(e => e.EntityName, "Employee") &
+                         Builders<AuditLogEntry>.Filter.Eq(e => e.EntityId, email);
+
+            var total = await _auditLogger.CountAsync(filter);
+            var logs = await _auditLogger.GetLogsByEmployeeAsync(email, pageNumber, pageSize);
+
+            var pagedResult = new PagedResult<AuditLogEntry>
+            {
+                Items = logs,
+                TotalCount = total,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            return Ok(pagedResult);
         }
+
 
         private async Task<List<AuditLogEntry>> GetEmployeeLogsInternal(string email)
         {
@@ -52,11 +66,25 @@ namespace EmployeeManagement.API.Controllers
 
         // GET: api/auditlogs
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(int pageNumber = 1, int pageSize = 50)
         {
-            var logs = await _auditLogger.GetAllLogsAsync();
-            return Ok(logs);
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0 || pageSize > 500) pageSize = 50; // limit max page size
+
+            var totalCount = await _auditLogger.CountAllLogsAsync();
+            var logs = await _auditLogger.GetAllLogsAsync(pageNumber, pageSize);
+
+            var pagedResult = new PagedResult<AuditLogEntry>
+            {
+                Items = logs,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            return Ok(pagedResult);
         }
+
     }
 
 }

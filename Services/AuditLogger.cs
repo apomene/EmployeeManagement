@@ -61,6 +61,24 @@ public class AuditLogger : IAuditLogger
                                      .ToListAsync();
     }
 
+    public async Task<List<AuditLogEntry>> GetLogsByEmployeeAsync(
+    string employeeId, int pageNumber, int pageSize)
+    {
+        var filter = Builders<AuditLogEntry>.Filter.Eq(e => e.EntityName, "Employee") &
+                     Builders<AuditLogEntry>.Filter.Eq(e => e.EntityId, employeeId);
+
+        return await _auditCollection.Find(filter)
+                                     .SortByDescending(e => e.Timestamp)
+                                     .Skip((pageNumber - 1) * pageSize)
+                                     .Limit(pageSize)
+                                     .ToListAsync();
+    }
+
+    public async Task<int> CountAsync(FilterDefinition<AuditLogEntry> filter)
+    {
+        return (int)await _auditCollection.CountDocumentsAsync(filter);
+    }
+
 
     public async Task<List<AuditLogEntry>> GetAllLogsAsync()
     {
@@ -69,34 +87,20 @@ public class AuditLogger : IAuditLogger
                                      .ToListAsync();
     }
 
+    public async Task<List<AuditLogEntry>> GetAllLogsAsync(int pageNumber, int pageSize)
+    {
+        return await _auditCollection
+            .Find(_ => true)
+            .SortByDescending(e => e.Timestamp)
+            .Skip((pageNumber - 1) * pageSize)
+            .Limit(pageSize)
+            .ToListAsync();
+    }
+
+    public async Task<int> CountAllLogsAsync()
+    {
+        return (int)await _auditCollection.CountDocumentsAsync(_ => true);
+    }
+
 }
 
-
-/// <summary>
-/// For testing purposes, a no-op audit logger that does nothing.
-/// </summary>
-public class FakeAuditLogger : IAuditLogger
-{
-   
-    public async Task LogChangeAsync(
-       string entityName,
-       string entityId,
-       string action,
-       EmployeeDto? newValue,
-       string performedBy,
-       EmployeeDto? oldValue = null)
-    {
-        // do nothing in tests
-       
-    }
-
-    public async Task<List<AuditLogEntry>> GetLogsByEmployeeAsync(string employeeId)
-    {
-       return new List<AuditLogEntry>();
-    }
-
-    public async Task<List<AuditLogEntry>> GetAllLogsAsync()
-    {
-        return new List<AuditLogEntry>();
-    }
-}
