@@ -17,6 +17,7 @@ namespace EmployeeManagement.Models
         public const string FAIL_DELETE_SKILLS = "Cannot delete skill because it is assigned to one or more employees.";
         public const string NO_SKILLS = "No Skills Found";
         public const string FAIL_EXPORT_SKILLS = "Failed to export skills.";
+        public const string CANNNOT_CREATE_SKILL = "Could not create new skill.";
 
         // Employees
         public const string EMPLOYEES = "employees";
@@ -54,6 +55,7 @@ namespace EmployeeManagement.Models
         public const string LOG_SKILL_UPDATED = "Updated skill {SkillId}";
         public const string LOG_SKILL_DELETED = "Deleted skill {SkillId}";
         public const string LOG_SKILLS_EXPORTED = "Exported skills to CSV";
+       
 
         //Audit Logs
         public const string AUDIT_CREATE = "Create";
@@ -63,7 +65,8 @@ namespace EmployeeManagement.Models
         public const string AUDIT_SKILL_REMOVE = "REMOVED_SKILL";
         public const string NO_LOGS_FOUND = "No audit logs found for employee with e-mail: ";
         public const string AUDIT_LOGS = "auditlogs";
-        public const string LOGS_ERROR = "Error retrieving audit logs for employee with e-mail: {email}";
+        public const string LOGS_ERROR = "Error retrieving audit logs for employee with e-mail: {email}"; 
+        public const string AUDIT_USER = "System";
 
 
     }

@@ -44,27 +44,6 @@ namespace EmployeeManagement.API.Controllers
         }
 
 
-        private async Task<List<AuditLogEntry>> GetEmployeeLogsInternal(string email)
-        {
-
-            var logs = await _auditLogger.GetLogsByEmployeeAsync(email);
-            try
-            {
-                if (logs == null || !logs.Any())
-                    throw new KeyNotFoundException($"{StringConstants.NO_LOGS_FOUND}{email}'.");
-
-            }
-            catch (KeyNotFoundException kex)
-            {
-                _logger.LogWarning(kex.Message);
-                return new List<AuditLogEntry>();
-            }
-          
-            return logs;
-        }
-
-
-        // GET: api/auditlogs
         [HttpGet]
         public async Task<IActionResult> GetAll(int pageNumber = 1, int pageSize = 50)
         {

@@ -52,7 +52,6 @@ namespace EmployeeManagement.MVC.Controllers
                             ?? new List<Employee>();
             }
 
-            // Apply search (client-side filter if not handled in API)
             if (!string.IsNullOrEmpty(search))
             {
                 employees = employees
@@ -79,7 +78,6 @@ namespace EmployeeManagement.MVC.Controllers
         }
 
 
-        // GET: Employees/Details/5   
         public async Task<IActionResult> Details(int id)
         {
             var dto = await _http.GetFromJsonAsync<EmployeeDto>($"{StringConstants.EMPLOYEES}/{id}");
@@ -93,7 +91,6 @@ namespace EmployeeManagement.MVC.Controllers
             return View(viewModel);
         }
 
-        // GET: Create
         public async Task<IActionResult> Create()
         {
             await EnsureDepartmentsLoadedAsync();
@@ -110,7 +107,6 @@ namespace EmployeeManagement.MVC.Controllers
             return View(viewModel);
         }
 
-        // POST: Create or Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveEmployee(CreateEmployeeViewModel viewModel)
@@ -162,7 +158,7 @@ namespace EmployeeManagement.MVC.Controllers
 
                     if (!skillResponse.IsSuccessStatusCode)
                     {
-                        TempData["SkillError"] = "Could not create new skill.";
+                        TempData["SkillError"] = StringConstants.CANNNOT_CREATE_SKILL;
                         return RedirectToAction(nameof(Create));
                     }
 
@@ -201,7 +197,6 @@ namespace EmployeeManagement.MVC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Employees/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
             await EnsureDepartmentsLoadedAsync();
@@ -235,8 +230,6 @@ namespace EmployeeManagement.MVC.Controllers
             return View("Create", viewModel);
         }
 
-
-        // GET: Delete
         public async Task<IActionResult> Delete(int id)
         {
 
@@ -247,7 +240,6 @@ namespace EmployeeManagement.MVC.Controllers
             return View(GetViewModel(employee));
         }
 
-        // POST: DeleteConfirmed
         [HttpPost, ActionName("DeleteConfirmed")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(EmployeeViewModel viewModel)
@@ -357,10 +349,8 @@ namespace EmployeeManagement.MVC.Controllers
             };
             return viewModel;
         }
-
         private EmployeeViewModel GetViewModel(EmployeeDto dto)
         {
-
             var viewModel = new EmployeeViewModel
             {
                 Id = dto.Id,

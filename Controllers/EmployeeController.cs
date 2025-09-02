@@ -4,7 +4,6 @@ using EmployeeManagement.Models;
 using EmployeeManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NLog.Filters;
 
 /// <summary>
 /// Controller for managing Employees and their Skills.
@@ -149,9 +148,9 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
                 _ = auditLogger.LogChangeAsync(
                    entityName: "Employee",
                    entityId: dto.Email, // Using Email as unique Id of the audit log
-                   action: "Create",
+                   action:StringConstants.AUDIT_CREATE,
                    newValue: dto,
-                   performedBy: "system"  // TO DO: Replace with actual user/scheduler info if we implement authentication
+                   performedBy:StringConstants.AUDIT_USER  // TO DO: Replace with actual user/scheduler info if we implement authentication
                );
             }
         }
@@ -237,9 +236,9 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
                 _ = auditLogger.LogChangeAsync(
                    entityName: "Employee",
                    entityId: dto.Email, // Using Email as unique Id of the audit log
-                   action: "Update",
+                   action: StringConstants.AUDIT_UPDATE,
                    newValue: dto,
-                   performedBy: "system"  // TO DO: Replace with actual user/scheduler info if we implement authentication
+                   performedBy:StringConstants.AUDIT_USER  // TO DO: Replace with actual user/scheduler info if we implement authentication
                );
             }
         }
@@ -316,9 +315,9 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         _ = auditLogger.LogChangeAsync(
            entityName: "Employee",
            entityId: employeeDto.Email, // Using Email as unique Id of the audit log
-           action: "Delete",
+           action: StringConstants.AUDIT_DELETE,
            newValue: employeeDto,
-           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
+           performedBy:StringConstants.AUDIT_USER); // TO DO: Replace with actual user/scheduler info if we implement authentication
         return NoContent();
     }
 
@@ -403,9 +402,9 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         _ = auditLogger.LogChangeAsync(
            entityName: "Employee",
            entityId: employeeDto.Email, // Using Email as unique Id of the audit log
-           action: "ADDED_SKILL",
+           action: StringConstants.AUDIT_SKILL_ADD,
            newValue: employeeDto,
-           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
+           performedBy:StringConstants.AUDIT_USER); // TO DO: Replace with actual user/scheduler info if we implement authentication
         return NoContent();
     }
 
@@ -448,9 +447,9 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         _ = auditLogger.LogChangeAsync(
            entityName: "Employee",
            entityId: employeeDto.Email, // Using Email as unique Id of the audit log
-           action: "REMOVED_SKILL",
+           action: StringConstants.AUDIT_SKILL_REMOVE,
            newValue: employeeDto,
-           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
+           performedBy:StringConstants.AUDIT_USER); // TO DO: Replace with actual user/scheduler info if we implement authentication
 
         return NoContent();
     }
