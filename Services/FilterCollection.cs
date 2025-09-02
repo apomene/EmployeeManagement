@@ -7,8 +7,16 @@
     using System.Linq.Expressions;
     using System.Reflection;
 
-    public class FilterCollection(AppDbContext db)
+    public class FilterCollection
     {
+        private readonly AppDbContext _db;
+        public FilterCollection() { }
+        public FilterCollection(AppDbContext db)
+        {
+            _db = db;
+        }
+
+       
         public string? OrderBy { get; set; }
         public string Direction { get; set; } = "asc";
         public string? SearchTerm { get; set; }
@@ -73,25 +81,30 @@
             query = ApplyOrdering(query);
             return query;
         }
-
-        public async Task<List<Employee>> GetEmployeesBySkillsAsync(List<int> skillIds)
+     
+        public  async Task<List<EmployeeDto>> GetEmployeesBySkillsAsync(List<int> skillIds)
         {
-            var query = db.Employees.AsQueryable();
-
+            var query = _db.Employees
+                .Include(e => e.EmployeeSkills)
+                    .ThenInclude(es => es.Skill)
+                .AsQueryable();
 
             if (skillIds != null && skillIds.Any())
             {
                 query = query.Where(e => e.EmployeeSkills.Any(es => skillIds.Contains(es.SkillId)));
             }
 
-            var result= await query
-                .Include(e => e.EmployeeSkills)
-                .ThenInclude(es => es.Skill)
-                .Include(e => e.Department)
+            return await query
+                .Select(e => new EmployeeDto(
+                    e.Id,
+                    e.FirstName,
+                    e.LastName,
+                    e.HireDate,
+                    e.Email,
+                    e.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
+                    e.DepartmentId
+                ))
                 .ToListAsync();
-            return result;
         }
-
-
     }
 }

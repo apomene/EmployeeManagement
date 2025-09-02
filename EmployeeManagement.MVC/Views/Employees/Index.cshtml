@@ -1,4 +1,5 @@
-﻿@model IEnumerable<EmployeeManagement.Models.Employee>
+﻿@using EmployeeManagement.Models
+@model IEnumerable<EmployeeManagement.Models.Employee>
 
 <h2 class="mb-4">Employees</h2>
 
@@ -10,19 +11,34 @@
     </div>
 }
 
-
 <div class="row mb-3">
-    <div class="col-md-4">
+    <div class="col-md-8">
         <form id="employeeIndexForm" asp-action="Index" method="get" class="d-flex">
             <input type="text" name="search"
                    id="searchInput"
                    value="@ViewData["CurrentSearch"]"
                    class="form-control me-2"
                    placeholder="Search by name..." />
+
+            <select name="skillIds" id="skillSelect" class="form-select me-2" multiple>
+                @foreach (var skill in (ViewBag.Skills as List<Skill>) ?? new List<Skill>())
+                {
+                    <option value="@skill.Id"
+                            selected="@( (ViewData["SelectedSkills"] as List<int>)?.Contains(skill.Id) == true ? "selected" : null )">
+                        @skill.Name
+                    </option>
+                }
+            </select>
+
+
             <input type="hidden" name="sortBy" id="sortBy" value="@ViewData["CurrentSort"]" />
+            <button type="submit" class="btn btn-primary">Filter</button>
         </form>
+
     </div>
-   
+</div>
+
+<div class="row mb-3">       
     <div class="col-md-4 text-end">
         <a asp-action="Create" class="btn btn-success">+ Create New Employee</a>
     </div>
@@ -31,9 +47,6 @@
             <button type="submit" class="btn btn-success mb-3">Import Employees</button>
         </form>
     </div>
- 
-   
-
 </div>
 
 

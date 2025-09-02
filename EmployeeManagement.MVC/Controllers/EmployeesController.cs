@@ -25,16 +25,37 @@ namespace EmployeeManagement.MVC.Controllers
             }
         }
         // GET: Employees
-        public async Task<IActionResult> Index(string? sortBy, string? search)
+        public async Task<IActionResult> Index(string? sortBy, string? search, List<int>? skillIds)
         {
             await EnsureDepartmentsLoadedAsync();
 
-            var employees = await _http.GetFromJsonAsync<List<Employee>>(StringConstants.EMPLOYEES)
-             ?? new List<Employee>();
+            var skills = await _http.GetFromJsonAsync<List<Skill>>(StringConstants.SKILLS)
+                ?? new List<Skill>();
+            ViewBag.Skills = skills;
 
+            List<Employee> employees;
+
+            if (skillIds != null && skillIds.Any())
+            {
+                // Call API with skill filters
+                var query = new QueryString();
+                foreach (var id in skillIds)
+                    query = query.Add("skillIds", id.ToString());
+
+                var url = $"{StringConstants.EMPLOYEES}/filter-by-skills{query}";
+                employees = await _http.GetFromJsonAsync<List<Employee>>(url) ?? new List<Employee>();
+            }
+            else
+            {
+                // Default: fetch all employees
+                employees = await _http.GetFromJsonAsync<List<Employee>>(StringConstants.EMPLOYEES)
+                            ?? new List<Employee>();
+            }
+
+            // Apply search (client-side filter if not handled in API)
             if (!string.IsNullOrEmpty(search))
             {
-                employees = employees?
+                employees = employees
                     .Where(e => e.FirstName.Contains(search, StringComparison.OrdinalIgnoreCase)
                              || e.LastName.Contains(search, StringComparison.OrdinalIgnoreCase))
                     .ToList();
@@ -52,9 +73,11 @@ namespace EmployeeManagement.MVC.Controllers
 
             ViewData["CurrentSearch"] = search;
             ViewData["CurrentSort"] = sortBy;
+            ViewData["SelectedSkills"] = skillIds ?? new List<int>();
 
             return View(employees);
         }
+
 
         // GET: Employees/Details/5   
         public async Task<IActionResult> Details(int id)

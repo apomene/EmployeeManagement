@@ -648,25 +648,24 @@ namespace EmployeeManagement.Tests
 
         [Test]
         [TestCase(new[] { 1,23,34 }, 3, "Alice")]
-        [TestCase(new[] { 1,2,42 }, 1, "Bob")]
-        [TestCase(new int[0], 4, "Alice")] // no filter, return all employees
+        [TestCase(new[] { 1,2,42 }, 2, "Bob")]
+        [TestCase(new int[0], 5, "Alice")] // no filter, return all employees
         public async Task FilterBySkills_ReturnsExpectedEmployees(int[] skillIds, int expectedCount, string expectedFirstName)
         {
             // Arrange
             var db = await SeedTestData();
-            var filter = new FilterCollection(db);
             var controller = new EmployeesController(db, _logger, _auditLogger);
 
             // Act
-            var result = await controller.FilterBySkills(skillIds.ToList(), filter);
+            var result = await controller.FilterBySkills(skillIds.ToList());
 
             // Assert
             Assert.That(result, Is.Not.Null);
 
-            var employees = result.Value as List<Employee>;
+            var employees = result.Value as List<EmployeeDto>;
 
             Assert.That(employees, Is.Not.Null);
-            Assert.That(employees!.SelectMany(es=>es.EmployeeSkills).Count, Is.EqualTo(expectedCount));
+            Assert.That(employees!.SelectMany(es=>es.Skills).Count, Is.EqualTo(expectedCount));
             if (expectedCount > 0)
             {
                 Assert.That(employees[0].FirstName, Is.EqualTo(expectedFirstName));

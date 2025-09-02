@@ -4,6 +4,7 @@ using EmployeeManagement.Models;
 using EmployeeManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NLog.Filters;
 
 /// <summary>
 /// Controller for managing Employees and their Skills.
@@ -454,18 +455,29 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         return NoContent();
     }
 
-    public Task<ActionResult<List<Employee>>> FilterBySkills([FromQuery] List<int> skillIds, FilterCollection filter)
+    /// <summary>
+    /// Gets employees filtered by skills.
+    /// </summary>
+    /// <param name="skillIds">List of skill IDs to filter by. Empty list = all employees.</param>
+    /// <returns>List of employees with department and skills.</returns>
+    [HttpGet("filter-by-skills")]
+    public Task<ActionResult<List<EmployeeDto>>> FilterBySkills([FromQuery] List<int> skillIds)
     {
-        return  ActionWrapper.ExecuteAsync(
-             logger,
-             () => FilterBySkillsInternal(skillIds,filter),
-             StringConstants.LOG_EMPLOYEE_SKILLS_FETCHED, filter
-         );
+        var skillIdsMessage = (skillIds != null && skillIds.Any())
+            ? string.Join(",", skillIds)
+            : "ALL";
+
+        return ActionWrapper.ExecuteAsync(
+            logger,
+            () => FilterBySkillsInternal(skillIds),
+            $"{StringConstants.LOG_EMPLOYEES_FETCHED} with skill_IDs:{skillIdsMessage}"
+        );
     }
 
 
-    private async Task<List<Employee>> FilterBySkillsInternal(List<int> skillIds, FilterCollection filter)
+    private async Task<List<EmployeeDto>> FilterBySkillsInternal(List<int> skillIds)
     {
+        var filter = new FilterCollection(db);
         var result = await filter.GetEmployeesBySkillsAsync(skillIds);
         return result;
     }
