@@ -12,9 +12,9 @@ public static class ActionWrapper
     /// Executes an async action with centralized try/catch and logging.
     /// Returns 200 OK with result on success,
     /// 400 Bad Request if validation/business exception occurs,
+    /// 404 Not Found for missing resources,
     /// or 500 Internal Server Error on unexpected exception.
     /// </summary>
-    /// <typeparam name="T">Type of the result returned by the action.</typeparam>
     public static async Task<ActionResult<T>> ExecuteAsync<T>(
         ILogger logger,
         Func<Task<T>> action,
@@ -23,47 +23,38 @@ public static class ActionWrapper
     {
         try
         {
-            T result = await action();
-            
-            if ( result is ObjectResult)
+            var result = await action();
+
+            if (result is IActionResult actionResult)
             {
-                var objResult = result as ObjectResult;
-                if (objResult.StatusCode >= 200 && objResult.StatusCode < 300)
-                {
-                    if (!string.IsNullOrEmpty(successMessage))
-                    {
-                        logger.LogInformation(successMessage, successParams);
-                    }
-                }
-                else if (objResult.StatusCode >= 400 && objResult.StatusCode < 500)
-                {
-
-                    logger.LogWarning("Bad request: {Message}", objResult.Value);
-                }
-                return result;
+                LogResult(logger, actionResult, successMessage, successParams);
             }
-           
-
-            if (!string.IsNullOrEmpty(successMessage))
+            else if (!string.IsNullOrEmpty(successMessage))
             {
                 logger.LogInformation(successMessage, successParams);
             }
+
             return result;
-        }       
+        }
         catch (BadRequestException brex)
         {
             logger.LogWarning(brex, "Bad request: {Message}", brex.Message);
             return new BadRequestObjectResult(new { error = brex.Message });
         }
+        catch (KeyNotFoundException knf)
+        {
+            logger.LogWarning(knf, "Resource not found: {Message}", knf.Message);
+            return new NotFoundResult();
+        }
         catch (Exception ex)
         {
-            logger.LogError(ex, StringConstants.ERROR_500,ex.Message);
+            logger.LogError(ex, StringConstants.ERROR_500, ex.Message);
             return new StatusCodeResult(500);
         }
     }
 
     /// <summary>
-    /// Variant for actions that return only IActionResult
+    /// Variant for actions that return only IActionResult.
     /// </summary>
     public static async Task<IActionResult> ExecuteAsync(
         ILogger logger,
@@ -74,35 +65,18 @@ public static class ActionWrapper
         try
         {
             var result = await action();
-
-            if (result is ObjectResult)
-            {
-                var objResult = result as ObjectResult;
-                if (objResult.StatusCode >= 200 && objResult.StatusCode < 300)
-                {
-                    if (!string.IsNullOrEmpty(successMessage))
-                    {
-                        logger.LogInformation(successMessage, successParams);
-                    }
-                }
-                else if (objResult.StatusCode >= 400 && objResult.StatusCode < 500)
-                {
-
-                    logger.LogWarning("Bad request: {Message}", objResult.Value);
-                }
-                return result;
-            }
-
-            if (!string.IsNullOrEmpty(successMessage))
-            {
-                logger.LogInformation(successMessage, successParams);
-            }
+            LogResult(logger, result, successMessage, successParams);
             return result;
         }
-        catch (KeyNotFoundException ex)
+        catch (KeyNotFoundException knf)
         {
-            logger.LogWarning(ex.Message);
-            return new StatusCodeResult(404);
+            logger.LogWarning(knf, "Resource not found: {Message}", knf.Message);
+            return new NotFoundResult();
+        }
+        catch (BadRequestException brex)
+        {
+            logger.LogWarning(brex, "Bad request: {Message}", brex.Message);
+            return new BadRequestObjectResult(new { error = brex.Message });
         }
         catch (Exception ex)
         {
@@ -111,6 +85,30 @@ public static class ActionWrapper
         }
     }
 
-
-
+    /// <summary>
+    /// Shared logic for logging based on IActionResult status codes.
+    /// </summary>
+    private static void LogResult(
+        ILogger logger,
+        IActionResult result,
+        string? successMessage,
+        params object[] successParams)
+    {
+        if (result is ObjectResult objResult)
+        {
+            if (objResult.StatusCode is >= 200 and < 300)
+            {
+                if (!string.IsNullOrEmpty(successMessage))
+                    logger.LogInformation(successMessage, successParams);
+            }
+            else if (objResult.StatusCode is >= 400 and < 500)
+            {
+                logger.LogWarning("Bad request: {Message}", objResult.Value);
+            }
+        }
+        else if (!string.IsNullOrEmpty(successMessage))
+        {
+            logger.LogInformation(successMessage, successParams);
+        }
+    }
 }
