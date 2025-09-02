@@ -72,28 +72,40 @@ namespace EmployeeManagement.Tests
 
 
         [Test]
-        public async Task GetAll_ShouldReturnAllLogs()
+        [TestCase(1, 1, 1)] 
+        [TestCase(1, 2, 2)] 
+        [TestCase(2, 1, 1)]
+        public async Task GetAll_ShouldReturnPagedLogs(int pageNumber, int pageSize, int expectedCount)
         {
-            
+
+            // Add some initial logs
+            _dto = new EmployeeDto(1, "John", "Doe", DateTime.UtcNow, "john@example.com", new List<string> { "C#" }, 1);
+            _dto2 = new EmployeeDto(2, "Jane", "Smith", DateTime.UtcNow, "jane@example.com", new List<string> { "Java" }, 2);
 
             await _auditLogger.LogChangeAsync("Employee", "emp1", "Create", _dto, "test-user");
             await _auditLogger.LogChangeAsync("Department", "emp2", "Update", _dto2, "test-user");
 
+            _controller = new AuditLogsController(_auditLogger,_logger);
             // Act
-            var result = await _controller.GetAll() as OkObjectResult;
+            var result = await _controller.GetAll(pageNumber, pageSize) as OkObjectResult;
 
             // Assert
             Assert.That(result, Is.Not.Null);
 
-            var logs = result.Value as List<AuditLogEntry>;
-            Assert.That(logs, Is.Not.Null);
-            Assert.That(logs.Count, Is.EqualTo(2));
-            Assert.That(logs.Any(l => l.EntityName == "Employee" && l.Action == "Create"), Is.True);
-            Assert.That(logs[0].EntityId == "emp2", Is.True);
-            Assert.That(logs[0].NewValue.Email == _dto2.Email, Is.True);
-            Assert.That(logs[1].EntityId == "emp1", Is.True);
-            Assert.That(logs[1].NewValue.Email == _dto.Email, Is.True);
+            var pagedResult = result.Value as PagedResult<AuditLogEntry>;
+            Assert.That(pagedResult, Is.Not.Null);
 
+            var logs = pagedResult!.Items;
+            Assert.That(logs.Count, Is.EqualTo(expectedCount));
+
+            // Optional: verify descending order of timestamps
+            if (logs.Count > 1)
+                Assert.That(logs[0].Timestamp >= logs[1].Timestamp);
+
+            // Check pagination metadata
+            Assert.That(pagedResult.PageNumber, Is.EqualTo(pageNumber));
+            Assert.That(pagedResult.PageSize, Is.EqualTo(pageSize));
+            Assert.That(pagedResult.TotalCount, Is.EqualTo(2)); // total logs in system
         }
 
         [Test]
