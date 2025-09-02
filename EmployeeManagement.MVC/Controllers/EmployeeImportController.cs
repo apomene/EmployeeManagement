@@ -12,7 +12,7 @@ namespace EmployeeManagement.MVC.Controllers
         public EmployeeImportController(IHttpClientFactory factory, IConfiguration configuration)
         {
             var apiName = configuration.GetValue<string>("ApiSettings:EmployeesApiName");
-            _http = factory.CreateClient(apiName);
+            _http = factory.CreateClient(apiName!);
         }
 
          [HttpPost]

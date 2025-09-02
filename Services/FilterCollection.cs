@@ -1,5 +1,6 @@
 ﻿namespace EmployeeManagement.Services
 {
+    using EmployeeManagement.API.Services;
     using EmployeeManagement.Data;
     using EmployeeManagement.Models;
     using Microsoft.EntityFrameworkCore;
@@ -94,17 +95,7 @@
                 query = query.Where(e => e.EmployeeSkills.Any(es => skillIds.Contains(es.SkillId)));
             }
 
-            return await query
-                .Select(e => new EmployeeDto(
-                    e.Id,
-                    e.FirstName,
-                    e.LastName,
-                    e.HireDate,
-                    e.Email,
-                    e.EmployeeSkills.Select(es => es.Skill.Name).ToList(),
-                    e.DepartmentId
-                ))
-                .ToListAsync();
+            return await query.Select(e =>Helpers.ToEmployeeDto(e)).ToListAsync();
         }
     }
 }

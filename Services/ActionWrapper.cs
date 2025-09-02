@@ -1,6 +1,5 @@
 ﻿using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 public class BadRequestException : Exception
 {
@@ -111,4 +110,7 @@ public static class ActionWrapper
             return new StatusCodeResult(500);
         }
     }
+
+
+
 }

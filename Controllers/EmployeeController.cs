@@ -32,7 +32,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
             query = filter.ApplyAll(query);
 
-            var employees = await query.Select(e => ToEmployeeDto(e)) .ToListAsync();
+            var employees = await query.Select(e => Helpers.ToEmployeeDto(e)) .ToListAsync();
 
             return employees;
         },
@@ -61,7 +61,7 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         if (employee == null) return NotFound();
 
-        var dto = ToEmployeeDto(employee!);
+        var dto = Helpers.ToEmployeeDto(employee!);
 
         return Ok(dto);
     }
@@ -116,27 +116,17 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     /// <param name="dto">Employee data.</param>
     /// <returns>Created employee.</returns>
     [HttpPost]
-    public Task<IActionResult> CreateEmployee(EmployeeDto dto)
+    public async Task<IActionResult> CreateEmployee(EmployeeDto dto)
     {
-        var result = ActionWrapper.ExecuteAsync(
+        var result =  await ActionWrapper.ExecuteAsync(
             logger,
             () => CreateEmployeeInternal(dto),
-            StringConstants.LOG_EMPLOYEE_CREATED, dto.FirstName, dto.LastName
-        );
-        if (result.IsCompleted && result.Result is ObjectResult objResult)
-        {
-            if (objResult.StatusCode > 200 && objResult.StatusCode < 300)
-            {
-                _ = auditLogger.LogChangeAsync(
-                   entityName: "Employee",
-                   entityId: dto.Email, // Using Email as unique Id of the audit log
-                   action:StringConstants.AUDIT_CREATE,
-                   newValue: dto,
-                   performedBy: "system"  // TO DO: Replace with actual user/scheduler info if we implement authentication
-               );
-            }
-        }
+            StringConstants.LOG_EMPLOYEE_CREATED, dto.FirstName, dto.LastName);
+      
+        LogAuditIfSuccessful<IActionResult>(result, StringConstants.AUDIT_CREATE, dto);
+        
         return result;
+
     }
 
     /// <summary>
@@ -164,25 +154,12 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
             DepartmentId = dto.DepartmentId
         };
 
-        if (dto.Skills != null && dto.Skills.Any())
-        {
-            foreach (var skillName in dto.Skills)
-            {
-                var skill = await db.Skills.FirstOrDefaultAsync(s => s.Name == skillName)
-                            ?? new Skill { Name = skillName };
-
-                employee.EmployeeSkills.Add(new EmployeeSkill
-                {
-                    Employee = employee,
-                    Skill = skill
-                });
-            }
-        }
+        await AssignSkillsToEmployee(employee, dto.Skills);
 
         db.Employees.Add(employee);
         await db.SaveChangesAsync();
 
-        var resultDto = ToEmployeeDto(employee!);
+        var resultDto = Helpers.ToEmployeeDto(employee!);
 
         return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, resultDto);
     }
@@ -196,26 +173,16 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     /// <param name="dto">Updated employee data.</param>
     /// <returns>No content if successful.</returns>
     [HttpPut("{id:int}")]
-    public Task<IActionResult> UpdateEmployee(int id, EmployeeDto dto)
+    public async Task<IActionResult> UpdateEmployee(int id, EmployeeDto dto)
     {
-        var result = ActionWrapper.ExecuteAsync(
+        var result = await ActionWrapper.ExecuteAsync(
             logger,
             () => UpdateEmployeeInternal(id, dto),
             StringConstants.LOG_EMPLOYEE_UPDATED, id
         );
-        if (result.IsCompleted && result.Result is NoContentResult objResult)
-        {
-            if (objResult.StatusCode == 204)
-            {
-                _ = auditLogger.LogChangeAsync(
-                   entityName: "Employee",
-                   entityId: dto.Email, // Using Email as unique Id of the audit log
-                   action: StringConstants.AUDIT_UPDATE,
-                   newValue: dto,
-                   performedBy: "system"  // TO DO: Replace with actual user/scheduler info if we implement authentication
-               );
-            }
-        }
+
+        LogAuditIfSuccessful<IActionResult>(result, StringConstants.AUDIT_UPDATE, dto);
+   
         return result;
     }
 
@@ -233,23 +200,8 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
         employee.Email = dto.Email;
         employee.DepartmentId = dto.DepartmentId;
 
-        if (dto.Skills != null && dto.Skills.Any())
-        {
-            foreach (var skillName in dto.Skills)
-            {
-                var skill = await db.Skills.FirstOrDefaultAsync(s => s.Name == skillName)
-                            ?? new Skill { Name = skillName };
-                if (!employee.EmployeeSkills.Any(es => es.Skill.Name == skillName))
-                {
-                    employee.EmployeeSkills.Add(new EmployeeSkill
-                    {
-                        Employee = employee,
-                        Skill = skill
-                    });
-                }
-            }
-        }
-
+        await AssignSkillsToEmployee(employee, dto.Skills);
+    
         await db.SaveChangesAsync();
         return NoContent();
     }
@@ -278,15 +230,11 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         db.Employees.Remove(employee);
         await db.SaveChangesAsync();
-        var employeeDto = ToEmployeeDto(employee!);
+        var employeeDto = Helpers.ToEmployeeDto(employee!);
 
-        _ = auditLogger.LogChangeAsync(
-           entityName: "Employee",
-           entityId: employeeDto.Email, // Using Email as unique Id of the audit log
-           action: StringConstants.AUDIT_DELETE,
-           newValue: employeeDto,
-           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
-        return NoContent();
+        var result =  NoContent();
+        LogAuditIfSuccessful<IActionResult>(result, StringConstants.AUDIT_DELETE, employeeDto);
+        return result;
     }
 
 
@@ -314,12 +262,20 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
             .Where(e => ids.Contains(e.Id))
             .ToListAsync();
 
+        if (employees == null) return NotFound();
+
         if (!employees.Any())
             return NotFound(StringConstants.NO_MATCHING_EMPLOYEES);
 
         db.Employees.RemoveRange(employees);
         await db.SaveChangesAsync();
-        return NoContent();
+        var result = NoContent();
+        foreach (var emp in employees)
+        {
+            var employeeDto = Helpers.ToEmployeeDto(emp);
+            LogAuditIfSuccessful<IActionResult>(result, StringConstants.AUDIT_DELETE, employeeDto);
+        }
+        return result;
     }
 
 
@@ -359,15 +315,11 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
         await db.SaveChangesAsync();
 
-        var employeeDto = ToEmployeeDto(employee!);
+        var employeeDto = Helpers.ToEmployeeDto(employee!);
 
-        _ = auditLogger.LogChangeAsync(
-           entityName: "Employee",
-           entityId: employeeDto.Email, // Using Email as unique Id of the audit log
-           action: StringConstants.AUDIT_SKILL_ADD,
-           newValue: employeeDto,
-           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
-        return NoContent();
+        var result = NoContent();
+        LogAuditIfSuccessful<IActionResult>(result, StringConstants.AUDIT_SKILL_ADD, employeeDto);
+        return result;
     }
 
 
@@ -386,28 +338,24 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
 
     private async Task<IActionResult> RemoveSkillInternal(int id, int skillId)
     {
+        var employee = await db.Employees
+          .Include(e => e.EmployeeSkills)
+          .ThenInclude(es => es.Skill)
+          .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (employee == null) return NotFound();
         var employeeSkill = await db.EmployeeSkills
             .FirstOrDefaultAsync(es => es.EmployeeId == id && es.SkillId == skillId);
 
         if (employeeSkill == null) return NotFound();
 
         db.EmployeeSkills.Remove(employeeSkill);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync();  
 
-        var employee = await db.Employees
-           .Include(e => e.EmployeeSkills)
-           .ThenInclude(es => es.Skill)
-           .FirstOrDefaultAsync(e => e.Id == id);
-        var employeeDto = ToEmployeeDto(employee!);
-
-        _ = auditLogger.LogChangeAsync(
-           entityName: "Employee",
-           entityId: employeeDto.Email, // Using Email as unique Id of the audit log
-           action: StringConstants.AUDIT_SKILL_REMOVE,
-           newValue: employeeDto,
-           performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
-
-        return NoContent();
+        var employeeDto = Helpers.ToEmployeeDto(employee);
+        var result = NoContent();
+        LogAuditIfSuccessful<IActionResult>(result, StringConstants.AUDIT_SKILL_REMOVE, employeeDto);
+        return result;
     }
 
     /// <summary>
@@ -418,13 +366,14 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
     [HttpGet("filter-by-skills")]
     public Task<ActionResult<List<EmployeeDto>>> FilterBySkills([FromQuery] List<int> skillIds)
     {
+        var skills = skillIds ??= new List<int>();
         var skillIdsMessage = (skillIds != null && skillIds.Any())
             ? string.Join(",", skillIds)
             : "ALL";
 
         return ActionWrapper.ExecuteAsync(
             logger,
-            () => FilterBySkillsInternal(skillIds),
+            () => FilterBySkillsInternal(skills),
             $"{StringConstants.LOG_EMPLOYEES_FETCHED} with skill_IDs:{skillIdsMessage}"
         );
     }
@@ -445,22 +394,58 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
            .Include(e => e.EmployeeSkills)
                .ThenInclude(es => es.Skill)
            .FirstOrDefaultAsync(e => e.Id == id);
+   
 
-    // Private helper: safely maps Employee to EmployeeDto
-    private static EmployeeDto ToEmployeeDto(Employee employee)
+    // Private helper to safely assign/update employee skills
+    private async Task AssignSkillsToEmployee(Employee employee, IEnumerable<string>? skills)
     {
-        return new EmployeeDto(
-            employee.Id,
-            employee.FirstName,
-            employee.LastName,
-            employee.HireDate,
-            employee.Email,
-            employee.EmployeeSkills?
-                .Select(es => es.Skill?.Name ?? string.Empty)  // Safe navigation
-                .Where(name => !string.IsNullOrEmpty(name))    // Drop null/empty skill names
-                .ToList()
-                ?? new List<string>(),
-            employee.DepartmentId
-        );
+        if (skills == null || !skills.Any())
+            return;
+
+        // Ensure EmployeeSkills is initialized
+        employee.EmployeeSkills ??= new List<EmployeeSkill>();
+
+        foreach (var skillName in skills.Where(s => !string.IsNullOrWhiteSpace(s)))
+        {
+            // Try to find existing skill by name (case-insensitive match)
+            var skill = await db.Skills
+                .FirstOrDefaultAsync(s => s.Name.ToLower() == skillName.ToLower())
+                ?? new Skill { Name = skillName };
+
+            // Skip if already assigned (case-insensitive match)
+            var hasSkill = employee.EmployeeSkills
+                .Any(es => es.Skill != null && es.Skill.Name.Equals(skillName, StringComparison.OrdinalIgnoreCase));
+
+            if (!hasSkill)
+            {
+                employee.EmployeeSkills.Add(new EmployeeSkill
+                {
+                    Employee = employee,
+                    Skill = skill
+                });
+            }
+        }
     }
+
+    // Private helper to log changes safely after a successful action
+    private void LogAuditIfSuccessful<T>(
+        IActionResult result,
+        string action,
+        EmployeeDto dto)
+    {
+        // Only log if result indicates success
+        if (result is ObjectResult objResult && objResult.StatusCode is >= 200 and < 300 ||
+            result is NoContentResult)
+        {
+            _ = auditLogger.LogChangeAsync(
+                entityName: "Employee",
+                entityId: dto.Email, // Using Email as unique Id of the audit log
+                action: action,
+                newValue: dto,
+                performedBy: "system" // TODO: replace with actual user/scheduler info once authentication is added
+            );
+        }
+    }
+
+
 }
