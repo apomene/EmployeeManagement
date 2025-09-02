@@ -588,6 +588,51 @@ namespace EmployeeManagement.Tests
 
         }
 
+        [Test]
+        public async Task CreateEmployee_ShouldReturnBadRequest_WhenEmailAlreadyExists()
+        {
+            // Arrange - Add an existing employee with the same email
+            var existingEmployee = new Employee
+            {
+                Id = 1,
+                FirstName = "Jane",
+                LastName = "Smith",
+                HireDate = DateTime.UtcNow,
+                Email = "jane.smith@example.com",
+                DepartmentId = 1
+            };
+
+            _dbContext.Departments.Add(new Department
+            {
+                Id = 1,
+                Name = "HR",
+                Description = "Human Resources"
+            });
+            _dbContext.Employees.Add(existingEmployee);
+            await _dbContext.SaveChangesAsync();
+
+            // DTO with duplicate email
+            var dto = new EmployeeDto(
+                0,
+                "John",
+                "Doe",
+                DateTime.UtcNow,
+                "jane.smith@example.com", // same email as existing employee
+                new List<string> { "C#" },
+                1
+            );
+
+            // Act
+            var result = await _controller.CreateEmployee(dto);
+
+            // Assert
+            Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
+
+            var badRequest = result as BadRequestObjectResult;
+            Assert.That(badRequest!.Value, Is.EqualTo("An employee with email 'jane.smith@example.com' already exists."));
+        }
+
+
     }
 
 }

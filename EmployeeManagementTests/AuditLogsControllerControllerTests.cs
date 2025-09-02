@@ -114,6 +114,21 @@ namespace EmployeeManagement.Tests
             Assert.That(result.Last().Action, Is.EqualTo("Create"));
         }
 
+        [Test]
+        public async Task GetLogsByEmployeeAsync_ShouldReturnEmptyList_WhenNoLogsFound()
+        {
+            // Arrange
+            var nonExistingEmail = "doesnotexist@example.com";
+
+            // Act
+            var result = await _auditLogger.GetLogsByEmployeeAsync(nonExistingEmail);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, "Expected an empty list, but got null.");
+            Assert.That(result, Is.Empty, "Expected no logs for a non-existing employee.");
+        }
+
+
     }
 
 }
