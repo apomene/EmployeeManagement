@@ -142,31 +142,35 @@ namespace EmployeeManagement.MVC.Controllers
 
             // Prepare list of skill names to assign
             var skillNamesToAssign = new List<string>();
-            foreach (var skillId in viewModel.SelectedSkillIds)
+            var selectedSkills = viewModel.SelectedSkillIds;
+            if (selectedSkills != null && selectedSkills.Any())
             {
-                var selectedSkill = skills.FirstOrDefault(s => s.Id == skillId);
-                if (selectedSkill != null)
+                foreach (var skillId in selectedSkills)
                 {
-                    skillNamesToAssign.Add(selectedSkill.Name);
-                }
-                else if (!string.IsNullOrWhiteSpace(viewModel.NewSkillName))
-                {
-                    // Create the new skill via API
-                    var skillResponse = await _http.PostAsJsonAsync(
-                        StringConstants.SKILLS,
-                        new CreateSkillDto(viewModel.NewSkillName, viewModel.NewSkillDescription));
-
-                    if (!skillResponse.IsSuccessStatusCode)
+                    var selectedSkill = skills!.FirstOrDefault(s => s.Id == skillId);
+                    if (selectedSkill != null)
                     {
-                        TempData["SkillError"] = StringConstants.CANNNOT_CREATE_SKILL;
-                        return RedirectToAction(nameof(Create));
+                        skillNamesToAssign.Add(selectedSkill.Name);
                     }
+                    else if (!string.IsNullOrWhiteSpace(viewModel.NewSkillName))
+                    {
+                        // Create the new skill via API
+                        var skillResponse = await _http.PostAsJsonAsync(
+                            StringConstants.SKILLS,
+                            new CreateSkillDto(viewModel.NewSkillName, viewModel.NewSkillDescription));
 
-                    var newSkill = await skillResponse.Content.ReadFromJsonAsync<Skill>();
-                    skillNamesToAssign.Add(newSkill.Name);
+                        if (!skillResponse.IsSuccessStatusCode)
+                        {
+                            TempData["SkillError"] = StringConstants.CANNNOT_CREATE_SKILL;
+                            return RedirectToAction(nameof(Create));
+                        }
+
+                        var newSkill = await skillResponse.Content.ReadFromJsonAsync<Skill>();
+                        skillNamesToAssign.Add(newSkill!.Name);
+                    }
                 }
             }
-
+           
             // Map to DTO
             var dto = new EmployeeDto(
                 viewModel.Id,

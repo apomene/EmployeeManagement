@@ -19,37 +19,37 @@ namespace EmployeeManagement.API.Services
            EmployeeDto? oldValue = null)
         {
             // do nothing in tests
-
+            await Task.CompletedTask;
         }
 
         public async Task<List<AuditLogEntry>> GetLogsByEmployeeAsync(string employeeId)
         {
-            return new List<AuditLogEntry>();
+            return await Task.Run(() => new List<AuditLogEntry>());
         }
 
         public async Task<List<AuditLogEntry>> GetAllLogsAsync()
         {
-            return new List<AuditLogEntry>();
+            return await Task.Run(() => new List<AuditLogEntry>());
         }
 
         public async Task<int> CountAsync(FilterDefinition<AuditLogEntry> filter)
         {
-            return 0;
+            return await Task.Run(() => 0);
         }
 
         public async Task<List<AuditLogEntry>> GetLogsByEmployeeAsync(string employeeId, int pageNumber, int pageSize)
         {
-            return new List<AuditLogEntry>();
+            return await Task.Run(() => new List<AuditLogEntry>());
         }
 
         public async Task<List<AuditLogEntry>> GetAllLogsAsync(int pageNumber, int pageSize)
         {
-            return new List<AuditLogEntry>();
+            return await Task.Run(() => new List<AuditLogEntry>());
         }
 
         public async Task<int> CountAllLogsAsync()
         {
-            return 0;
+            return await Task.Run(() => 0);
         }
     }
 }
