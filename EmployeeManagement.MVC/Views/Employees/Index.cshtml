@@ -95,14 +95,4 @@
     </tbody>
 </table>
 
-<!-- Script to clear filters -->
-<script>
-    document.getElementById('clearFiltersBtn').addEventListener('click', function () {
-        document.getElementById('searchInput').value = '';
-        const skillSelect = document.getElementById('skillSelect');
-        for (let i = 0; i < skillSelect.options.length; i++) {
-            skillSelect.options[i].selected = false;
-        }
-        document.getElementById('employeeIndexForm').submit();
-    });
-</script>
+

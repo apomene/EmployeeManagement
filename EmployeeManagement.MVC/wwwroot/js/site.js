@@ -65,7 +65,18 @@
     const emailForm = document.getElementById("emailForm"); 
     if (emailForm) {
         setupEmailValidation("emailForm", "logEmail", "emailError");  // Audit Logs view
-    }      
+    }
+
+    // < --Script to clear filters-- >
+
+    document.getElementById('clearFiltersBtn').addEventListener('click', function () {
+        document.getElementById('searchInput').value = '';
+        const skillSelect = document.getElementById('skillSelect');
+        for (let i = 0; i < skillSelect.options.length; i++) {
+            skillSelect.options[i].selected = false;
+        }
+        document.getElementById('employeeIndexForm').submit();
+    });
     
 });
 
@@ -97,8 +108,9 @@ function setupEmailValidation(formId, inputId, errorId) {
 
     input.addEventListener("input", () => {
         errorSpan.style.display = "none";
-    });
+    });   
 }
 
 
 
+   
