@@ -98,7 +98,7 @@ namespace EmployeeManagement.Tests
             var logs = pagedResult!.Items;
             Assert.That(logs.Count, Is.EqualTo(expectedCount));
 
-            // Optional: verify descending order of timestamps
+            //  verify descending order of timestamps
             if (logs.Count > 1)
                 Assert.That(logs[0].Timestamp >= logs[1].Timestamp);
 
@@ -139,8 +139,7 @@ namespace EmployeeManagement.Tests
             Assert.That(result, Is.Not.Null, "Expected an empty list, but got null.");
             Assert.That(result, Is.Empty, "Expected no logs for a non-existing employee.");
         }
-
-
+      
     }
 
 }
