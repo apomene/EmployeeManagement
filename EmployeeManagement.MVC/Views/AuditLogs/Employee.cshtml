@@ -11,10 +11,11 @@
         : $"Audit Logs for Employee: {email}")
 </h2>
 
-<form asp-controller="AuditLogs" asp-action="Employee" method="get" class="form-inline mb-4">
+<form id="emailForm" asp-controller="AuditLogs" asp-action="Employee" method="get" class="form-inline mb-4">
     <div class="form-group m-2">
         <label for="email" class="m-5px">Employee Email:</label>
-        <input type="email" id="email" name="email" class="form-control m-5px" value="@email" />
+        <input type="email" id="logEmail" name="email" class="form-control m-5px" value="@email" />
+        <span id="emailError" style="color: red; display: none;">Please enter a valid email.</span>
     </div>
     <button type="submit" class="btn btn-primary m-2 m-5px">Search</button>
     <button type="submit" name="email" value="" class="btn btn-secondary m-2 m-5px">Get All Logs</button>

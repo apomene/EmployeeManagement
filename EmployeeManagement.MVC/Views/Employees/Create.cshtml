@@ -8,7 +8,7 @@
 
 <h2>@title</h2>
 
-<form asp-action="@(isEdit ? "Edit" : "Create")"  method="post">
+<form id="employeeForm" asp-action="@(isEdit ? "Edit" : "Create")" method="post">
     <div class="row mb-3">
         <div class="col-md-6">
             <label asp-for="FirstName" class="form-label"></label>
@@ -25,7 +25,8 @@
     <div class="row mb-3">
         <div class="col-md-4">
             <label asp-for="Email" class="form-label"></label>
-            <input asp-for="Email" class="form-control" />
+            <input asp-for="Email" class="form-control" id="employeeEmailInput" />
+            <span id="employeeMailError" class="text-danger" style="display:none;">Please enter a valid email address.</span>
             <span asp-validation-for="Email" class="text-danger"></span>
         </div>
         <div class="col-md-4">
