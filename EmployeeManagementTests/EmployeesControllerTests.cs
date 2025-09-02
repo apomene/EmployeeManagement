@@ -60,8 +60,20 @@ namespace EmployeeManagement.Tests
         private async Task<AppDbContext> SeedTestData()
         {
             var department = new Department { Id = 1, Name = "IT" };
+            var HRdepartment = new Department { Id = 2,Name = "HR" };
+
+            // Skills
+
             var skill1 = new Skill { Id = 23, Name = "Angular" };
             var skill2 = new Skill { Id = 32, Name = "MongoDB" };
+            var skill3 = new Skill { Id = 34, Name = "C#" };
+            var skill4 = new Skill { Id = 42, Name = "SQL" };
+
+            var aliceSkills = new List<EmployeeSkill>
+            {
+                new EmployeeSkill {EmployeeId = 1, Skill = skill1 },
+                new EmployeeSkill {EmployeeId = 1, Skill = skill3 }
+            }; 
 
             _dbContext.Employees.AddRange(
                 new Employee
@@ -71,10 +83,9 @@ namespace EmployeeManagement.Tests
                     LastName = "Smith",
                     HireDate = new DateTime(2023, 1, 1),
                     Email = "alice@test.com",
-                    EmployeeSkills = new List<EmployeeSkill>
-                    {
-                    new EmployeeSkill { Skill = new Skill { Name = "C#" } }
-                    }
+                    Department = department,
+                    DepartmentId = department.Id,
+                    EmployeeSkills = aliceSkills
                 },
                 new Employee
                 {
@@ -83,9 +94,11 @@ namespace EmployeeManagement.Tests
                     LastName = "Johnson",
                     HireDate = new DateTime(2024, 5, 5),
                     Email = "bob@test.com",
+                    Department = department,
+                    DepartmentId = department.Id,
                     EmployeeSkills = new List<EmployeeSkill>
                     {
-                    new EmployeeSkill { Skill = new Skill { Name = "SQL" } }
+                    new EmployeeSkill { EmployeeId = 2,Skill = skill4 }
                     }
                 },
                 new Employee
@@ -115,7 +128,8 @@ namespace EmployeeManagement.Tests
 
 
             _dbContext.Departments.Add(department);
-            _dbContext.Skills.AddRange(skill1, skill2);
+            _dbContext.Departments.AddRange(HRdepartment) ;
+            _dbContext.Skills.AddRange(skill1, skill2,skill3,skill4);
 
             await _dbContext.SaveChangesAsync();
             return _dbContext;
@@ -186,7 +200,7 @@ namespace EmployeeManagement.Tests
             var db = await SeedTestData();
             var controller = new EmployeesController(db, _logger, _auditLogger);
 
-            var filter = new FilterCollection
+            var filter = new FilterCollection(db)
             {
                 SearchField = searchField,
                 SearchTerm = searchTerm,
@@ -212,7 +226,7 @@ namespace EmployeeManagement.Tests
             var db = await SeedTestData();
             var controller = new EmployeesController(db, _logger, _auditLogger);
 
-            var filter = new FilterCollection(); // no search/order
+            var filter = new FilterCollection(db); // no search/order
 
             // Act
             var result = await controller.GetEmployees(filter);
@@ -632,6 +646,32 @@ namespace EmployeeManagement.Tests
             Assert.That(badRequest!.Value, Is.EqualTo("An employee with email 'jane.smith@example.com' already exists."));
         }
 
+        [Test]
+        [TestCase(new[] { 1,23,34 }, 3, "Alice")]
+        [TestCase(new[] { 1,2,42 }, 1, "Bob")]
+        [TestCase(new int[0], 4, "Alice")] // no filter, return all employees
+        public async Task FilterBySkills_ReturnsExpectedEmployees(int[] skillIds, int expectedCount, string expectedFirstName)
+        {
+            // Arrange
+            var db = await SeedTestData();
+            var filter = new FilterCollection(db);
+            var controller = new EmployeesController(db, _logger, _auditLogger);
+
+            // Act
+            var result = await controller.FilterBySkills(skillIds.ToList(), filter);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+
+            var employees = result.Value as List<Employee>;
+
+            Assert.That(employees, Is.Not.Null);
+            Assert.That(employees!.SelectMany(es=>es.EmployeeSkills).Count, Is.EqualTo(expectedCount));
+            if (expectedCount > 0)
+            {
+                Assert.That(employees[0].FirstName, Is.EqualTo(expectedFirstName));
+            }
+        }
 
     }
 

@@ -4,7 +4,6 @@ using EmployeeManagement.Models;
 using EmployeeManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static MongoDB.Driver.WriteConcern;
 
 /// <summary>
 /// Controller for managing Employees and their Skills.
@@ -453,6 +452,22 @@ public class EmployeesController(AppDbContext db, ILogger<EmployeesController> l
            performedBy: "system"); // TO DO: Replace with actual user/scheduler info if we implement authentication
 
         return NoContent();
+    }
+
+    public Task<ActionResult<List<Employee>>> FilterBySkills([FromQuery] List<int> skillIds, FilterCollection filter)
+    {
+        return  ActionWrapper.ExecuteAsync(
+             logger,
+             () => FilterBySkillsInternal(skillIds,filter),
+             StringConstants.LOG_EMPLOYEE_SKILLS_FETCHED, filter
+         );
+    }
+
+
+    private async Task<List<Employee>> FilterBySkillsInternal(List<int> skillIds, FilterCollection filter)
+    {
+        var result = await filter.GetEmployeesBySkillsAsync(skillIds);
+        return result;
     }
 
 

@@ -1,9 +1,13 @@
 ﻿namespace EmployeeManagement.Services
 {
+    using EmployeeManagement.Data;
+    using EmployeeManagement.Models;
+    using Microsoft.EntityFrameworkCore;
+    using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
 
-    public class FilterCollection
+    public class FilterCollection(AppDbContext db)
     {
         public string? OrderBy { get; set; }
         public string Direction { get; set; } = "asc";
@@ -69,6 +73,25 @@
             query = ApplyOrdering(query);
             return query;
         }
-    }
 
+        public async Task<List<Employee>> GetEmployeesBySkillsAsync(List<int> skillIds)
+        {
+            var query = db.Employees.AsQueryable();
+
+
+            if (skillIds != null && skillIds.Any())
+            {
+                query = query.Where(e => e.EmployeeSkills.Any(es => skillIds.Contains(es.SkillId)));
+            }
+
+            var result= await query
+                .Include(e => e.EmployeeSkills)
+                .ThenInclude(es => es.Skill)
+                .Include(e => e.Department)
+                .ToListAsync();
+            return result;
+        }
+
+
+    }
 }
