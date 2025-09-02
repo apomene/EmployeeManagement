@@ -1,6 +1,5 @@
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
@@ -68,11 +67,12 @@ public class SkillsController(AppDbContext db, ILogger<EmployeesController> logg
     [HttpPost]
     public Task<IActionResult> CreateSkill([FromBody] CreateSkillDto dto)
     {
-        return ActionWrapper.ExecuteAsync(
+        var result =  ActionWrapper.ExecuteAsync(
             logger,
             () => CreateSkillInternal(dto),
             StringConstants.LOG_SKILL_CREATED, dto.Name
         );
+        return result;
     }
 
     private async Task<IActionResult> CreateSkillInternal(CreateSkillDto dto)
@@ -94,7 +94,7 @@ public class SkillsController(AppDbContext db, ILogger<EmployeesController> logg
         db.Skills.Add(skill);
         await db.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(CreateSkillInternal), skill);
+        return Created();
     }
 
 

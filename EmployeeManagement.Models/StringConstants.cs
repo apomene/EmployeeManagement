@@ -51,7 +51,7 @@ namespace EmployeeManagement.Models
         //Skills Controller
         public const string LOG_SKILLS_FETCHED = "Fetched all skills";
         public const string LOG_SKILL_FETCHED = "Fetched skill {SkillId}";
-        public const string LOG_SKILL_CREATED = "Created skill {SkillName} with ID {SkillId}";
+        public const string LOG_SKILL_CREATED = "Created skill {SkillName}";
         public const string LOG_SKILL_UPDATED = "Updated skill {SkillId}";
         public const string LOG_SKILL_DELETED = "Deleted skill {SkillId}";
         public const string LOG_SKILLS_EXPORTED = "Exported skills to CSV";
