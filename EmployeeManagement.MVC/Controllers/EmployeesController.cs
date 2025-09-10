@@ -2,6 +2,7 @@
 using EmployeeManagement.MVC.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using NLog.Common;
 
 namespace EmployeeManagement.MVC.Controllers
 {
@@ -147,29 +148,19 @@ namespace EmployeeManagement.MVC.Controllers
             {
                 foreach (var skillId in selectedSkills)
                 {
+                    var newSkill = await AddNewSkill(viewModel);
+                    if (newSkill != StringConstants.CANNNOT_CREATE_SKILL && !skillNamesToAssign.Contains(newSkill))
+                    {
+                        skillNamesToAssign.Add(newSkill);
+                    }
                     var selectedSkill = skills!.FirstOrDefault(s => s.Id == skillId);
                     if (selectedSkill != null)
                     {
                         skillNamesToAssign.Add(selectedSkill.Name);
-                    }
-                    else if (!string.IsNullOrWhiteSpace(viewModel.NewSkillName))
-                    {
-                        // Create the new skill via API
-                        var skillResponse = await _http.PostAsJsonAsync(
-                            StringConstants.SKILLS,
-                            new CreateSkillDto(viewModel.NewSkillName, viewModel.NewSkillDescription));
-
-                        if (!skillResponse.IsSuccessStatusCode)
-                        {
-                            TempData["SkillError"] = StringConstants.CANNNOT_CREATE_SKILL;
-                            return RedirectToAction(nameof(Create));
-                        }
-
-                        var newSkill = await skillResponse.Content.ReadFromJsonAsync<Skill>();
-                        skillNamesToAssign.Add(newSkill!.Name);
-                    }
+                    }                  
                 }
             }
+           
            
             // Map to DTO
             var dto = new EmployeeDto(
@@ -199,6 +190,26 @@ namespace EmployeeManagement.MVC.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task<string> AddNewSkill(CreateEmployeeViewModel viewModel)
+        {
+            if (!string.IsNullOrWhiteSpace(viewModel.NewSkillName))
+            {
+                // Create the new skill via API
+                var skillResponse = await _http.PostAsJsonAsync(
+                    StringConstants.SKILLS,
+                    new CreateSkillDto(viewModel.NewSkillName, viewModel.NewSkillDescription));
+
+                if (!skillResponse.IsSuccessStatusCode)
+                {
+                    TempData["SkillError"] = StringConstants.CANNNOT_CREATE_SKILL;
+                    return StringConstants.CANNNOT_CREATE_SKILL;
+                }
+
+                return viewModel.NewSkillName;
+            }
+            return StringConstants.CANNNOT_CREATE_SKILL;
         }
 
         public async Task<IActionResult> Edit(int id)

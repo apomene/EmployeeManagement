@@ -47,9 +47,10 @@
     <div class="row mb-3">
         <div class="col-12">
             <label asp-for="SelectedSkillIds" class="form-label">Skills</label>
+            
             <select asp-for="SelectedSkillIds" asp-items="Model.AvailableSkills"
                     multiple class="form-control" id="SelectedSkillIds" style="height:200px;">
-                <option value="-1">@skillPlaceholder</option>
+                <option value="-1">@skillPlaceholder-</option>
             </select>
             <span asp-validation-for="SelectedSkillIds" class="text-danger"></span>
         </div>
